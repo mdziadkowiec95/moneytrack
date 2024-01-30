@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 
@@ -12,6 +11,14 @@ const routes = [
     name: "Dashboard",
     href: "/dashboard",
     children: [],
+  },
+  {
+    name: "Sign in",
+    href: "/api/auth/signin",
+  },
+  {
+    name: "Sign out",
+    href: "/api/auth/signout",
   },
 ];
 

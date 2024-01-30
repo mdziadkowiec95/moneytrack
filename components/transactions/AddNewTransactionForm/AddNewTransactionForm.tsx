@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import * as Form from "@radix-ui/react-form";
-import {
-  MinusCircledIcon,
-  PlusCircledIcon,
-  TextAlignCenterIcon,
-  TextAlignLeftIcon,
-  TextAlignRightIcon,
-} from "@radix-ui/react-icons";
+import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { Heading } from "@radix-ui/themes";
 
-import Datepicker from "react-tailwindcss-datepicker";
+import Datepicker, { DateValueType } from "react-tailwindcss-datepicker";
 import { addNewTransaction } from "@/app/actions";
+import { TransactionType } from "@prisma/client";
 
 // id          String          @id @default(uuid())
 // type        TransactionType
@@ -23,39 +18,49 @@ import { addNewTransaction } from "@/app/actions";
 // date        DateTime
 // }
 
-type TransactionType = "income" | "outcome";
-
 type AddNewTransationFormState = {
   type: TransactionType;
+  date: DateValueType;
 };
 
-const isIncome = (type: TransactionType) => type === "income";
+const isIncome = (type: TransactionType) => type === TransactionType.INCOME;
 
 const toggleGroupItemClasses =
   "hover:bg-violet3 color-mauve11 bg-violet flex h-[35px] px-3 items-center justify-center bg-white data-[state=on]:bg-violet-200 text-base leading-4 first:rounded-l last:rounded-r focus:z-10 focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none";
 
 const AddNewTransactionForm = () => {
   const [formState, updateFormState] = useState<AddNewTransationFormState>({
-    type: "income",
+    type: TransactionType.INCOME,
     date: {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: new Date(new Date()),
+      endDate: null,
     },
   });
+
+  const onDateChange = (newDate: DateValueType) => {
+    updateFormState((state) => ({
+      ...state,
+      date: newDate,
+    }));
+  };
+
+  const onSubmit = (formData: FormData) => {
+    const transactionDate = formState.date?.startDate
+      ? new Date(formState.date.startDate)
+      : new Date();
+
+    formData.set("date", transactionDate.toISOString());
+    formData.set("type", formState.type);
+
+    addNewTransaction(formData);
+  };
 
   return (
     <div>
       <Heading size="4">
         Add new {isIncome(formState.type) ? "Income" : "Outcome"}
       </Heading>
-      <Form.Root
-        className="w-[260px]"
-        action={(formData) => {
-          formData.set("date", formState.date.startDate);
-
-          addNewTransaction(formData);
-        }}
-      >
+      <Form.Root className="w-[260px]" action={onSubmit}>
         <ToggleGroup.Root
           className="inline-flex bg-mauve6 rounded shadow-[0_2px_10px] shadow-blackA4 space-x-px"
           type="single"
@@ -74,21 +79,21 @@ const AddNewTransactionForm = () => {
         >
           <ToggleGroup.Item
             className={toggleGroupItemClasses}
-            value="outcome"
+            value={TransactionType.OUTCOME}
             aria-label="Center aligned"
           >
             Outcome
           </ToggleGroup.Item>
           <ToggleGroup.Item
             className={toggleGroupItemClasses}
-            value="income"
+            value={TransactionType.INCOME}
             aria-label="Left aligned"
           >
             Income
           </ToggleGroup.Item>
         </ToggleGroup.Root>
 
-        <Form.Field className="grid mb-[10px]" name="title">
+        <Form.Field className="grid mb-[10px]" name="amount">
           <div className="flex items-baseline justify-between">
             <Form.Label className="text-[15px] font-medium leading-[35px] text-black">
               Amount
@@ -133,21 +138,16 @@ const AddNewTransactionForm = () => {
             />
           </Form.Control>
         </Form.Field>
-        {console.log(formState.date)}
-        <Datepicker
-          useRange={false}
-          asSingle={true}
-          value={formState.date}
-          onChange={(newDate) => {
-            console.log(newDate);
-            updateFormState((s) => ({
-              ...s,
-              date: newDate,
-            }));
-
-            console.log(newDate);
-          }}
-        />
+        <Form.Field className="grid mb-[10px]" name="title">
+          <Form.Label>Date</Form.Label>
+          <Datepicker
+            inputName="date"
+            useRange={false}
+            asSingle={true}
+            value={formState.date}
+            onChange={onDateChange}
+          />
+        </Form.Field>
 
         <Form.Submit asChild>
           <button className="box-border w-full text-violet11 shadow-blackA4 hover:bg-mauve3 inline-flex h-[35px] items-center justify-center rounded-[4px] bg-white px-[15px] font-medium leading-none shadow-[0_2px_10px] focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none mt-[10px]">

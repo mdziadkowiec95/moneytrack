@@ -17,9 +17,27 @@ enum TransactionType {
 
 model Transaction {
   id          String          @id @default(uuid())
-  type        TransactionType
+  type        TransactionType @default(INCOME)
   title       String
+  amount      Float           @default(0)
   description String?
   createdAt   DateTime        @default(now())
   date        DateTime
+}
+
+enum Role {
+  USER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  // by default should be email (if not provided)
+  username  String
+  email     String
+  password  String
+  firstName String
+  lastName  String
+  // Role is for the future enhancement (for now only standard USER role)
+  role      Role     @default(USER)
+  cratedAt  DateTime @default(now())
 }
