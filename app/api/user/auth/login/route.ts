@@ -32,6 +32,8 @@ export async function POST(request: Request) {
     "secret-jwt-here"
   );
 
+  console.log(" POST login");
+
   //   "user": {
   //     "id": 1,
   //     "username": "john.doe@mailinator.com",

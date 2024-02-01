@@ -1,6 +1,9 @@
 "use client";
 import React from "react";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
+import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { Session } from "next-auth";
 
 const routes = [
   {
@@ -8,34 +11,56 @@ const routes = [
     href: "/",
   },
   {
+    allowedUserRoles: [Role.USER],
     name: "Dashboard",
-    href: "/dashboard",
+    href: "/app/",
     children: [],
   },
   {
+    type: "NOT_AUTHENTICATED",
     name: "Sign in",
     href: "/api/auth/signin",
   },
   {
+    type: "AUTHENTICATED",
     name: "Sign out",
     href: "/api/auth/signout",
   },
 ];
 
+const isAuthenticated = (
+  sessionStatus: "authenticated" | "unauthenticated" | "loading"
+) => {
+  if (sessionStatus === "authenticated") return true;
+  if (sessionStatus === "unauthenticated") return false;
+  if (sessionStatus === "loading") return false;
+};
+
 const Navbar = () => {
+  const session = useSession();
+
+  const hasUserRole = (userRoles: Role[] = []) => {
+    console.log(userRoles, session.data?.user?.role);
+    return userRoles.includes(session.data?.user?.role);
+  };
+
+  console.log(session.status);
   return (
     <NavigationMenu.Root className="relative z-[1] flex w-screen justify-center">
       <NavigationMenu.List className="center shadow-blackA4 m-0 flex list-none rounded-[6px] bg-white p-1 shadow-[0_2px_10px]">
-        {routes.map(({ href, name }) => (
-          <NavigationMenu.Item key={name}>
-            <NavigationMenu.Link
-              className="text-violet11 hover:bg-violet3 focus:shadow-violet7 block select-none rounded-[4px] px-3 py-2 text-[15px] font-medium leading-none no-underline outline-none focus:shadow-[0_0_0_2px]"
-              href={href}
-            >
-              {name}
-            </NavigationMenu.Link>
-          </NavigationMenu.Item>
-        ))}
+        {routes.map(({ href, name, allowedUserRoles, type }) =>
+          (type === "NOT_AUTHENTICATED" && !isAuthenticated(session.status)) ||
+          (type === "AUTHENTICATED" && isAuthenticated(session.status)) ? (
+            <NavigationMenu.Item key={name}>
+              <NavigationMenu.Link
+                className="text-violet11 hover:bg-violet3 focus:shadow-violet7 block select-none rounded-[4px] px-3 py-2 text-[15px] font-medium leading-none no-underline outline-none focus:shadow-[0_0_0_2px]"
+                href={href}
+              >
+                {name}
+              </NavigationMenu.Link>
+            </NavigationMenu.Item>
+          ) : null
+        )}
 
         <NavigationMenu.Indicator className="data-[state=visible]:animate-fadeIn data-[state=hidden]:animate-fadeOut top-full z-[1] flex h-[10px] items-end justify-center overflow-hidden transition-[width,transform_250ms_ease]">
           <div className="relative top-[70%] h-[10px] w-[10px] rotate-[45deg] rounded-tl-[2px] bg-white" />

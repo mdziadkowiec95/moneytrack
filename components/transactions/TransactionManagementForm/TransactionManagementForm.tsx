@@ -7,20 +7,19 @@ import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { Heading } from "@radix-ui/themes";
 
 import Datepicker, { DateValueType } from "react-tailwindcss-datepicker";
-import { addNewTransaction } from "@/app/actions";
+import { addNewTransaction, updateTransaction } from "@/app/actions";
 import { TransactionType } from "@prisma/client";
 
-// id          String          @id @default(uuid())
-// type        TransactionType
-// title       String
-// description String?
-// createdAt   DateTime        @default(now())
-// date        DateTime
-// }
-
-type AddNewTransationFormState = {
+type TransationManagementFormState = {
   type: TransactionType;
   date: DateValueType;
+  amount?: number;
+  title: string;
+};
+
+type InitialData = TransationManagementFormState & {
+  id: string;
+  date: Date;
 };
 
 const isIncome = (type: TransactionType) => type === TransactionType.INCOME;
@@ -28,19 +27,53 @@ const isIncome = (type: TransactionType) => type === TransactionType.INCOME;
 const toggleGroupItemClasses =
   "hover:bg-violet3 color-mauve11 bg-violet flex h-[35px] px-3 items-center justify-center bg-white data-[state=on]:bg-violet-200 text-base leading-4 first:rounded-l last:rounded-r focus:z-10 focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none";
 
-const AddNewTransactionForm = () => {
-  const [formState, updateFormState] = useState<AddNewTransationFormState>({
-    type: TransactionType.INCOME,
-    date: {
-      startDate: new Date(new Date()),
-      endDate: null,
-    },
-  });
+const TransactionManagementForm = ({
+  initialData,
+}: {
+  initialData?: InitialData;
+}) => {
+  const [formState, updateFormState] = useState<TransationManagementFormState>(
+    () => {
+      const initialState: TransationManagementFormState = {
+        type: TransactionType.INCOME,
+        date: {
+          startDate: new Date(new Date()),
+          endDate: new Date(new Date()),
+        },
+        amount: undefined,
+        title: "",
+      };
+
+      if (initialData) {
+        initialState.type = initialData.type;
+
+        if (initialData.date) {
+          initialState.date = {
+            startDate: new Date(initialData.date),
+            endDate: new Date(initialData.date),
+          };
+        }
+
+        initialState.amount = initialData.amount;
+        initialState.title = initialData.title;
+      }
+
+      return initialState;
+    }
+  );
 
   const onDateChange = (newDate: DateValueType) => {
+    console.log("onDateChang");
     updateFormState((state) => ({
       ...state,
       date: newDate,
+    }));
+  };
+
+  const onSimpleFieldChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateFormState((state) => ({
+      ...state,
+      [event.target.name]: event.target.value,
     }));
   };
 
@@ -52,7 +85,13 @@ const AddNewTransactionForm = () => {
     formData.set("date", transactionDate.toISOString());
     formData.set("type", formState.type);
 
-    addNewTransaction(formData);
+    if (!initialData) {
+      addNewTransaction(formData);
+    } else {
+      formData.set("id", initialData.id);
+
+      updateTransaction(formData);
+    }
   };
 
   return (
@@ -109,9 +148,8 @@ const AddNewTransactionForm = () => {
               <input
                 type="number"
                 min={0}
-                onChange={(event) => {
-                  console.log(`-${event.target.value}`);
-                }}
+                onChange={onSimpleFieldChange}
+                value={formState.amount}
                 className="pl-7 box-border w-full bg-blackA2 shadow-blackA6 inline-flex appearance-none items-center justify-center rounded-[4px] p-[10px] text-[15px] leading-none text-black shadow-[0_0_0_1px] outline-none hover:shadow-[0_0_0_1px_black] focus:shadow-[0_0_0_2px_black] selection:color-white selection:bg-blackA6 resize-none"
                 required
               />
@@ -133,6 +171,8 @@ const AddNewTransactionForm = () => {
           </div>
           <Form.Control asChild>
             <input
+              onChange={onSimpleFieldChange}
+              value={formState.title}
               className="box-border w-full bg-blackA2 shadow-blackA6 inline-flex appearance-none items-center justify-center rounded-[4px] p-[10px] text-[15px] leading-none text-black shadow-[0_0_0_1px] outline-none hover:shadow-[0_0_0_1px_black] focus:shadow-[0_0_0_2px_black] selection:color-white selection:bg-blackA6 resize-none"
               required
             />
@@ -140,13 +180,15 @@ const AddNewTransactionForm = () => {
         </Form.Field>
         <Form.Field className="grid mb-[10px]" name="title">
           <Form.Label>Date</Form.Label>
-          <Datepicker
-            inputName="date"
-            useRange={false}
-            asSingle={true}
-            value={formState.date}
-            onChange={onDateChange}
-          />
+          {formState.date && (
+            <Datepicker
+              inputName="date"
+              useRange={false}
+              asSingle={true}
+              value={formState.date}
+              onChange={onDateChange}
+            />
+          )}
         </Form.Field>
 
         <Form.Submit asChild>
@@ -159,4 +201,4 @@ const AddNewTransactionForm = () => {
   );
 };
 
-export default AddNewTransactionForm;
+export default TransactionManagementForm;
