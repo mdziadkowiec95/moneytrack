@@ -10,11 +10,7 @@ import {
   Text,
 } from "@radix-ui/themes";
 import { NextPage } from "next";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Component } from "react";
-
-type WithAuth = (Component: React.FC) => NextPage<any>;
 
 const Dashboard = () => {
   return (
@@ -24,8 +20,8 @@ const Dashboard = () => {
         <Link href="/app/transactions/addNew">Add New</Link>
       </Button>
 
-      <Grid columns="2" className="pt-4">
-        <Card size="1" style={{ width: 350 }} asChild>
+      <Grid columns="2" className="pt-4" gap="2">
+        <Card size="2" asChild>
           <Link href="/app/transactions">
             {" "}
             <Flex gap="3" align="center">
@@ -33,6 +29,19 @@ const Dashboard = () => {
               <Box>
                 <Text size="2" weight="bold">
                   Transactions
+                </Text>
+              </Box>
+            </Flex>
+          </Link>
+        </Card>
+
+        <Card size="2" asChild>
+          <Link href="/app/balance">
+            <Flex gap="3" align="center">
+              <Avatar size="3" radius="full" fallback="T" color="indigo" />
+              <Box>
+                <Text size="2" weight="bold">
+                  Balance
                 </Text>
               </Box>
             </Flex>

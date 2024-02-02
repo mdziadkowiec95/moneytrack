@@ -30,7 +30,15 @@ export default function RootLayout({
             <Navbar />
           </header>
           <main>
-            <Theme>{children}</Theme>
+            <Theme
+              scaling="110%"
+              appearance="dark"
+              panelBackground="translucent"
+              accentColor="mint"
+              grayColor="mauve"
+            >
+              {children}
+            </Theme>
           </main>
         </AuthProvider>
       </body>

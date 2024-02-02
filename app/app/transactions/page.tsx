@@ -12,26 +12,27 @@ const Transactions = async () => {
     return redirect("/api/auth/signin");
   }
 
-  const transactions: Transaction[] = await db.transaction.findMany({
+  const transactions = (await db.transaction.findMany({
     where: { userId: session.user.id },
-  });
+  })) as Transaction[];
 
   return (
     <>
-      <Button asChild>
-        <Link href="/app/transactions/addNew">Add transaction</Link>
-      </Button>
-      <Grid className="my-6">
+      <Grid columns="2">
+        <Button asChild>
+          <Link href="/app/transactions/addNew">Add transaction</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/app/">Dashboard</Link>
+        </Button>
+      </Grid>
+
+      <Grid className="my-6" gap="2">
         {transactions.map((transaction) => (
-          <Card asChild>
+          <Card key={transaction.id} asChild>
             <Link href={`/app/transactions/edit/${transaction.id}`}>
               <Flex gap="3" align="center">
-                <Avatar
-                  size="3"
-                  // src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
-                  radius="full"
-                  fallback="T"
-                />
+                <Avatar size="3" radius="full" fallback="T" />
                 <Box>
                   <Text as="p" size="2" weight="bold">
                     {transaction.title}
