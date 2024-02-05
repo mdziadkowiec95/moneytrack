@@ -10,6 +10,8 @@ const EditTransaction = async ({ params }: { params: { id: string } }) => {
     where: { id: params.id },
   });
 
+  console.log(transaction);
+
   return (
     <>
       <Button asChild>

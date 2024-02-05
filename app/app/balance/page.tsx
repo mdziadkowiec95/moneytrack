@@ -14,7 +14,7 @@ const BalancePage = async () => {
     where: { userId: session.user.id },
   })) as Transaction[];
 
-  console.log({ transactions });
+  // console.log({ transactions });
   return (
     <div>
       <h1>Balance Page</h1>

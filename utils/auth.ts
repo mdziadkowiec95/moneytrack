@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
             );
             // console.log("res", await res.text());
             const data = await res.json();
-            console.log("data", data);
+            // console.log("data", data);
 
             if (typeof data !== "undefined") {
               console.log("in !!!");
@@ -70,8 +70,8 @@ export const authOptions: NextAuthOptions = {
     //   // redirect("/app");
     // },
     async session({ session, token, user }) {
-      console.log("session.token", token);
-      console.log("session.user", user);
+      // console.log("session.token", token);
+      // console.log("session.user", user);
 
       const sanitizedToken = Object.keys(token).reduce((p, c) => {
         // strip unnecessary properties
@@ -87,11 +87,11 @@ export const authOptions: NextAuthOptions = {
       return { ...session, user: sanitizedToken, apiToken: token.apiToken };
     },
     async jwt(data) {
-      console.log("jwt.all", data);
+      // console.log("jwt.all", data);
       const { token, user, account, profile } = data;
-      console.log("jwt.token", token);
-      console.log("jwt.user", user);
-      console.log("jwt.account", user);
+      // console.log("jwt.token", token);
+      // console.log("jwt.user", user);
+      // console.log("jwt.account", user);
       if (typeof user !== "undefined") {
         // user has just signed in so the user object is populated
         return user as unknown as JWT;

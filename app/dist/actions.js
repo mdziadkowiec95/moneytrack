@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.updateTransaction = exports.addNewTransaction = void 0;
+exports.addNewAccount = exports.updateTransaction = exports.addNewTransaction = void 0;
 var auth_1 = require("@/utils/auth");
 var db_1 = require("@/utils/db");
 var client_1 = require("@prisma/client");
@@ -54,13 +54,15 @@ var editTransactionSchema = baseTransactionSchema.merge(zod_1.z.object({
     id: zod_1.z.string()
 }));
 function addNewTransaction(formData) {
+    var _a;
     return __awaiter(this, void 0, void 0, function () {
-        var session, transaction;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var session, transaction, transactions, lastTransaction, balance, createNewTransactionQuery, balanceUpdateAction, updateAffectedFinanceSourceHistoryBalancesQuery;
+        var _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0: return [4 /*yield*/, auth_1.getAuthServerSession()];
                 case 1:
-                    session = _a.sent();
+                    session = _c.sent();
                     // @TODO try to type the user object in auth
                     if (!(session === null || session === void 0 ? void 0 : session.user.id)) {
                         throw new Error("User not authenticated");
@@ -69,21 +71,71 @@ function addNewTransaction(formData) {
                         title: formData.get("title"),
                         amount: Number(formData.get("amount")),
                         date: formData.get("date"),
-                        type: formData.get("type")
+                        type: formData.get("type"),
+                        financeSourceId: formData.get("financeSourceId")
                     };
-                    console.log("transaction date", transaction.date);
                     addTransactionSchema.parse(transaction); // Validate the transaction data
-                    return [4 /*yield*/, db_1.db.transaction.create({
-                            data: {
-                                title: transaction.title,
-                                amount: transaction.amount,
-                                date: transaction.date,
-                                type: transaction.type,
-                                userId: session === null || session === void 0 ? void 0 : session.user.id
-                            }
+                    return [4 /*yield*/, db_1.db.transaction.findMany({
+                            where: {
+                                date: {
+                                    lte: new Date(transaction.date)
+                                }
+                            },
+                            include: {
+                                financeSourceHistory: true
+                            },
+                            orderBy: {
+                                date: "desc"
+                            },
+                            take: 1
                         })];
                 case 2:
-                    _a.sent();
+                    transactions = _c.sent();
+                    lastTransaction = transactions[0];
+                    balance = 0;
+                    // If there is previous transaction THEN calculate the new balance based on the previous transaction balance
+                    if (lastTransaction) {
+                        balance = (_a = lastTransaction.financeSourceHistory) === null || _a === void 0 ? void 0 : _a.balance;
+                    }
+                    createNewTransactionQuery = db_1.db.transaction.create({
+                        data: {
+                            title: transaction.title,
+                            amount: transaction.amount,
+                            date: transaction.date,
+                            type: transaction.type,
+                            userId: session === null || session === void 0 ? void 0 : session.user.id,
+                            financeSourceId: transaction.financeSourceId,
+                            financeSourceHistory: {
+                                create: {
+                                    financeSourceId: transaction.financeSourceId,
+                                    balance: balance,
+                                    userId: session === null || session === void 0 ? void 0 : session.user.id
+                                }
+                            }
+                        }
+                    });
+                    balanceUpdateAction = transaction.type === client_1.TransactionType.INCOME ? "increment" : "decrement";
+                    updateAffectedFinanceSourceHistoryBalancesQuery = db_1.db.financeSourceHistory.updateMany({
+                        where: {
+                            financeSourceId: transaction.financeSourceId,
+                            transaction: {
+                                date: {
+                                    gte: new Date(transaction.date)
+                                }
+                            }
+                        },
+                        data: {
+                            balance: (_b = {},
+                                _b[balanceUpdateAction] = transaction.amount,
+                                _b)
+                        }
+                    });
+                    return [4 /*yield*/, db_1.db.$transaction([
+                            createNewTransactionQuery,
+                            updateAffectedFinanceSourceHistoryBalancesQuery,
+                        ])];
+                case 3:
+                    _c.sent();
                     navigation_1.redirect("/app/transactions");
                     return [2 /*return*/];
             }
@@ -108,7 +160,8 @@ function updateTransaction(formData) {
                         title: formData.get("title"),
                         amount: Number(formData.get("amount")),
                         date: formData.get("date"),
-                        type: formData.get("type")
+                        type: formData.get("type"),
+                        financeSourceId: formData.get("financeSourceId")
                     };
                     editTransactionSchema.parse(transaction); // Validate the transaction data
                     if (!transaction.id) return [3 /*break*/, 3];
@@ -122,7 +175,8 @@ function updateTransaction(formData) {
                                 title: transaction.title,
                                 amount: transaction.amount,
                                 date: transaction.date,
-                                type: transaction.type
+                                type: transaction.type,
+                                financeSourceId: transaction.financeSourceId
                             }
                         })];
                 case 2:
@@ -137,3 +191,43 @@ function updateTransaction(formData) {
     });
 }
 exports.updateTransaction = updateTransaction;
+function addNewAccount(formData) {
+    return __awaiter(this, void 0, void 0, function () {
+        var session, account;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, auth_1.getAuthServerSession()];
+                case 1:
+                    session = _a.sent();
+                    // @TODO try to type the user object in auth
+                    if (!(session === null || session === void 0 ? void 0 : session.user.id)) {
+                        throw new Error("User not authenticated");
+                    }
+                    account = {
+                        name: formData.get("name"),
+                        financeSourceType: formData.get("financeSourceType")
+                    };
+                    return [4 /*yield*/, db_1.db.financeSource.create({
+                            data: {
+                                name: account.name,
+                                currency: "PLN",
+                                type: account.financeSourceType,
+                                balance: 0,
+                                userId: session === null || session === void 0 ? void 0 : session.user.id,
+                                financeSourceHistories: {
+                                    create: {
+                                        balance: 0,
+                                        userId: session === null || session === void 0 ? void 0 : session.user.id
+                                    }
+                                }
+                            }
+                        })];
+                case 2:
+                    _a.sent();
+                    navigation_1.redirect("/app/accounts");
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.addNewAccount = addNewAccount;

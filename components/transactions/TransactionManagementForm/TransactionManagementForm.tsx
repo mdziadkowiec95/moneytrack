@@ -1,25 +1,48 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import * as Form from "@radix-ui/react-form";
 import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { Button, Heading, TextField } from "@radix-ui/themes";
+import { Button, Heading, Select, TextField } from "@radix-ui/themes";
 
 import Datepicker, { DateValueType } from "react-tailwindcss-datepicker";
 import { addNewTransaction, updateTransaction } from "@/app/actions";
-import { TransactionType } from "@prisma/client";
+import {
+  FinanceSource,
+  FinanceSourceType,
+  TransactionType,
+} from "@prisma/client";
+import { db } from "@/utils/db";
+import { useSession } from "next-auth/react";
+
+const ACCOUNTS = [
+  {
+    name: "Cash",
+    value: FinanceSourceType.CASH,
+  },
+  {
+    name: "Bank",
+    value: FinanceSourceType.BANK_ACCOUNT,
+  },
+  {
+    name: "Investment",
+    value: FinanceSourceType.INVESTMENT,
+  },
+];
 
 type TransationManagementFormState = {
   type: TransactionType;
   date: DateValueType;
   amount?: number;
   title: string;
+  financeSourceId?: string;
 };
 
 type InitialData = TransationManagementFormState & {
   id: string;
   date: Date;
+  financeSourceId: string;
 };
 
 const isIncome = (type: TransactionType) => type === TransactionType.INCOME;
@@ -32,6 +55,7 @@ const TransactionManagementForm = ({
 }: {
   initialData?: InitialData;
 }) => {
+  const session = useSession();
   const [formState, updateFormState] = useState<TransationManagementFormState>(
     () => {
       const initialState: TransationManagementFormState = {
@@ -42,6 +66,7 @@ const TransactionManagementForm = ({
         },
         amount: undefined,
         title: "",
+        financeSourceId: undefined,
       };
 
       if (initialData) {
@@ -56,11 +81,45 @@ const TransactionManagementForm = ({
 
         initialState.amount = initialData.amount;
         initialState.title = initialData.title;
+
+        console.log("initialData.accountId", initialData.financeSourceId);
+
+        initialState.financeSourceId = initialData.financeSourceId;
       }
 
       return initialState;
     }
   );
+
+  const [accounts, setAccounts] = useState<FinanceSource[]>();
+  const [accountsLoading, setAccountsLoading] = useState(false);
+
+  useEffect(() => {
+    if (session.status !== "authenticated") return;
+
+    const fetchAccounts = async () => {
+      setAccountsLoading(true);
+
+      const response = await fetch("http://localhost:3000/api/financeSource");
+      const accountsData = await response.json();
+
+      console.log("accounts", accounts);
+      setAccounts(accountsData.accounts);
+
+      console.log(" accounts.accounts[0].id", accountsData.accounts[0].id);
+
+      updateFormState((state) => ({
+        ...state,
+        financeSourceId: accountsData.accounts[0].id,
+      }));
+
+      setAccountsLoading(false);
+    };
+
+    if (!accounts && !accountsLoading) {
+      fetchAccounts();
+    }
+  }, [session, accounts, accountsLoading]);
 
   const prevAmount = useRef(formState.amount || 0);
 
@@ -69,6 +128,15 @@ const TransactionManagementForm = ({
     updateFormState((state) => ({
       ...state,
       date: newDate,
+    }));
+  };
+
+  const onAccountChange = (selectedAccountId: string) => {
+    if (!selectedAccountId) return;
+
+    updateFormState((state) => ({
+      ...state,
+      financeSourceId: selectedAccountId,
     }));
   };
 
@@ -183,6 +251,30 @@ const TransactionManagementForm = ({
               </Form.Control>
             </TextField.Root>
           </div>
+        </Form.Field>
+
+        <Form.Field name="financeSourceId">
+          <div className="flex items-baseline justify-between">
+            <Form.Label>Account</Form.Label>
+          </div>
+
+          <Select.Root
+            name="financeSourceId"
+            // defaultValue={formState.accountId}
+            value={formState.financeSourceId}
+            onValueChange={onAccountChange}
+          >
+            <Select.Trigger />
+            <Select.Content>
+              {accounts &&
+                formState.financeSourceId &&
+                accounts.map((account) => (
+                  <Select.Item key={account.id} value={account.id}>
+                    {account.name}
+                  </Select.Item>
+                ))}
+            </Select.Content>
+          </Select.Root>
         </Form.Field>
 
         <Form.Field className="grid mb-[10px]" name="title">

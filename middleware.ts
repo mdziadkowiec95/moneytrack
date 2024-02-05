@@ -8,7 +8,11 @@ export default withAuth(
     const token = await getToken({ req });
 
     // Redirect to /app logged in users
-    if (!req.nextUrl.pathname.startsWith("/app") && token) {
+    if (
+      !req.nextUrl.pathname.startsWith("/app") &&
+      !req.nextUrl.pathname.startsWith("/api") &&
+      token
+    ) {
       return NextResponse.redirect(new URL("/app", req.url));
     }
   },
