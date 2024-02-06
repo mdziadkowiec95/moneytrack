@@ -62,11 +62,16 @@ export async function addNewTransaction(formData: FormData) {
   const [lastTransaction] = transactions;
 
   // TODO - Should assume initial balance set when creating account for the default balance
-  let balance = 0;
+  let balanceDelta =
+    transaction.type === TransactionType.INCOME
+      ? transaction.amount
+      : -transaction.amount;
+
+  let balance = balanceDelta;
 
   // If there is previous transaction THEN calculate the new balance based on the previous transaction balance
   if (lastTransaction) {
-    balance = lastTransaction.financeSourceHistory?.balance;
+    balance = lastTransaction.financeSourceHistory?.balance + balanceDelta;
   }
 
   const createNewTransactionQuery = db.transaction.create({
@@ -96,7 +101,7 @@ export async function addNewTransaction(formData: FormData) {
         financeSourceId: transaction.financeSourceId,
         transaction: {
           date: {
-            gte: new Date(transaction.date),
+            gt: new Date(transaction.date),
           },
         },
       },
@@ -175,12 +180,12 @@ export async function addNewAccount(formData: FormData) {
       type: account.financeSourceType,
       balance: 0,
       userId: session?.user.id,
-      financeSourceHistories: {
-        create: {
-          balance: 0,
-          userId: session?.user.id,
-        },
-      },
+      // financeSourceHistories: {
+      //   create: {
+      //     balance: 0,
+      //     userId: session?.user.id,
+      //   },
+      // },
     },
   });
 

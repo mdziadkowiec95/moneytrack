@@ -56,7 +56,7 @@ var editTransactionSchema = baseTransactionSchema.merge(zod_1.z.object({
 function addNewTransaction(formData) {
     var _a;
     return __awaiter(this, void 0, void 0, function () {
-        var session, transaction, transactions, lastTransaction, balance, createNewTransactionQuery, balanceUpdateAction, updateAffectedFinanceSourceHistoryBalancesQuery;
+        var session, transaction, transactions, lastTransaction, balanceDelta, balance, createNewTransactionQuery, balanceUpdateAction, updateAffectedFinanceSourceHistoryBalancesQuery;
         var _b;
         return __generator(this, function (_c) {
             switch (_c.label) {
@@ -92,10 +92,13 @@ function addNewTransaction(formData) {
                 case 2:
                     transactions = _c.sent();
                     lastTransaction = transactions[0];
-                    balance = 0;
+                    balanceDelta = transaction.type === client_1.TransactionType.INCOME
+                        ? transaction.amount
+                        : -transaction.amount;
+                    balance = balanceDelta;
                     // If there is previous transaction THEN calculate the new balance based on the previous transaction balance
                     if (lastTransaction) {
-                        balance = (_a = lastTransaction.financeSourceHistory) === null || _a === void 0 ? void 0 : _a.balance;
+                        balance = ((_a = lastTransaction.financeSourceHistory) === null || _a === void 0 ? void 0 : _a.balance) + balanceDelta;
                     }
                     createNewTransactionQuery = db_1.db.transaction.create({
                         data: {
@@ -120,7 +123,7 @@ function addNewTransaction(formData) {
                             financeSourceId: transaction.financeSourceId,
                             transaction: {
                                 date: {
-                                    gte: new Date(transaction.date)
+                                    gt: new Date(transaction.date)
                                 }
                             }
                         },
@@ -213,13 +216,7 @@ function addNewAccount(formData) {
                                 currency: "PLN",
                                 type: account.financeSourceType,
                                 balance: 0,
-                                userId: session === null || session === void 0 ? void 0 : session.user.id,
-                                financeSourceHistories: {
-                                    create: {
-                                        balance: 0,
-                                        userId: session === null || session === void 0 ? void 0 : session.user.id
-                                    }
-                                }
+                                userId: session === null || session === void 0 ? void 0 : session.user.id
                             }
                         })];
                 case 2:

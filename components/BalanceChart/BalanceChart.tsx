@@ -59,6 +59,8 @@ const generateChartDataForMonth = (
 
   // Set balances per each day based on the history
   balances.forEach((balance) => {
+    // TODO - handle multiple transactions per day
+    // IF there is another balance data for the same day AND it has createdAt bigger than already set THEN replace it
     const day = new Date(balance.transaction.date).getDate();
 
     values[day - 1] = balance.balance;

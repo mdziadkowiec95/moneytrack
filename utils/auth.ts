@@ -10,7 +10,6 @@ import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "./db";
 import { JWT } from "next-auth/jwt";
-import { User } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   // TODO -> Workaround DB persistance for credential provider auth -> https://nneko.branche.online/next-auth-credentials-provider-with-the-database-session-strategy/

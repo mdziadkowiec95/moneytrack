@@ -24,19 +24,21 @@ export async function GET(request: Request) {
   // TODO - Support getting most updated balance for each month in the year. (12 months, 6 monts, 3 months, 1 month)
 
   // Get only the last transaction for each date in the range
-  const transactionsInDateRange = (await db.$queryRaw`
-    SELECT t.id, t.date
-    FROM "Transaction" t
-    INNER JOIN (
-      SELECT DATE(date) as date, MAX(date) as max_date
-      FROM "Transaction"
-      WHERE date >= ${new Date("2024-02-01")} AND date < ${new Date(
-    "2024-05-01"
-  )}
-      GROUP BY DATE(date)
-    ) subq ON t.date = subq.max_date
-    ORDER BY t.date DESC
-  `) as Pick<Transaction, "id" | "date">[];
+  const transactionsInDateRange = await db.transaction.findMany({
+    select: {
+      id: true,
+      date: true,
+    },
+    where: {
+      date: {
+        gte: new Date("2024-01-31"),
+        lt: new Date("2024-05-01"),
+      },
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
 
   const transactionIds = transactionsInDateRange.map(
     (transaction) => transaction.id
