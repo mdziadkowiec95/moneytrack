@@ -53,11 +53,18 @@ export async function addNewTransaction(formData: FormData) {
     include: {
       financeSourceHistory: true,
     },
-    orderBy: {
-      date: "desc",
-    },
+    orderBy: [
+      {
+        date: "desc",
+      },
+      {
+        updatedAt: "desc",
+      },
+    ],
     take: 1,
   });
+
+  console.log({ transactions });
 
   const [lastTransaction] = transactions;
 

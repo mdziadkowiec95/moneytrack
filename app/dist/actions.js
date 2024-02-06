@@ -84,13 +84,19 @@ function addNewTransaction(formData) {
                             include: {
                                 financeSourceHistory: true
                             },
-                            orderBy: {
-                                date: "desc"
-                            },
+                            orderBy: [
+                                {
+                                    date: "desc"
+                                },
+                                {
+                                    updatedAt: "desc"
+                                },
+                            ],
                             take: 1
                         })];
                 case 2:
                     transactions = _c.sent();
+                    console.log({ transactions: transactions });
                     lastTransaction = transactions[0];
                     balanceDelta = transaction.type === client_1.TransactionType.INCOME
                         ? transaction.amount

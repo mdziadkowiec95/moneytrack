@@ -39,7 +39,29 @@ vi.mock("next/navigation", () => {
 
 let financeSource: FinanceSource;
 let user: User;
-let firstFinanceSourceHistoryRecord: FinanceSourceHistory;
+
+const getFinanceSourceHistories = async () =>
+  db.financeSourceHistory.findMany({
+    where: {
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    },
+    include: {
+      transaction: true,
+    },
+    orderBy: [
+      {
+        transaction: {
+          date: "asc",
+        },
+      },
+      {
+        transaction: {
+          updatedAt: "asc",
+        },
+      },
+    ],
+  });
 
 const restoreTransactions = async () => {
   const deleteTransactions = db.transaction.deleteMany();
@@ -115,7 +137,7 @@ afterAll(async () => {
 });
 
 describe("adding first transaction", () => {
-  test.only("should create new transaction properly when no transactions added yet", async () => {
+  test("should create new transaction properly when no transactions added yet", async () => {
     const formData = new FormData();
 
     formData.append("title", "Integration Test 1 INCOME");
@@ -136,6 +158,7 @@ describe("adding first transaction", () => {
       id: expect.any(String),
       amount: 1000,
       createdAt: expect.any(Date),
+      updatedAt: expect.any(Date),
       date: new Date("2024-02-06T23:00:00.000Z"),
       description: null,
       financeSourceId: financeSource.id,
@@ -145,7 +168,7 @@ describe("adding first transaction", () => {
     });
   });
 
-  test.only("should create related finance source history entry with updated balance", async () => {
+  test("should create related finance source history entry with updated balance", async () => {
     const formData = new FormData();
 
     formData.append("title", "Integration Test 1 INCOME");
@@ -181,7 +204,7 @@ describe("updating balance", () => {
     await restoreTransactions();
   });
 
-  test.only("should update balance history properly when adding new transaction in the future", async () => {
+  test("should update balance history properly when adding new transaction in the future", async () => {
     const formData = new FormData();
 
     formData.append("title", "Integration Test 1 INCOME");
@@ -194,16 +217,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData);
 
     const financeSourceHistoriesAfterFristTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
+      await getFinanceSourceHistories();
 
     expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1);
     expect(financeSourceHistoriesAfterFristTransaction[0]).toEqual(
@@ -224,13 +238,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData2);
 
     const financeSourceHistoriesAfterSecondTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-      });
-
+      await getFinanceSourceHistories();
     // Verify balance
     expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2);
     expect(financeSourceHistoriesAfterSecondTransaction[0]).toEqual(
@@ -245,7 +253,7 @@ describe("updating balance", () => {
     );
   });
 
-  test.only("should update balance history properly when adding new transaction in the past", async () => {
+  test("should update balance history properly when adding new transaction in the past", async () => {
     const formData = new FormData();
 
     formData.append("title", "Integration Test 1 INCOME");
@@ -258,17 +266,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData);
 
     const financeSourceHistoriesAfterFristTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
+      await getFinanceSourceHistories();
 
     expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1);
     expect(financeSourceHistoriesAfterFristTransaction[0]).toEqual(
@@ -289,17 +287,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData2);
 
     const financeSourceHistoriesAfterSecondTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
+      await getFinanceSourceHistories();
 
     // Verify balance
     expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2);
@@ -327,17 +315,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData3);
 
     const financeSourceHistoriesAfterThirdTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
+      await getFinanceSourceHistories();
 
     // Verify balance
     expect(financeSourceHistoriesAfterThirdTransaction).toHaveLength(3);
@@ -358,7 +336,7 @@ describe("updating balance", () => {
     );
   });
 
-  test.only("should update balance history properly when adding new transaction in the exactly the same time as existing history record", async () => {
+  test("should update balance history properly when adding new transaction in the exactly the same time as existing history record", async () => {
     const formData = new FormData();
 
     formData.append("title", "Integration Test 1 INCOME");
@@ -371,18 +349,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData);
 
     const financeSourceHistoriesAfterFristTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
-
+      await getFinanceSourceHistories();
     expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1);
     expect(financeSourceHistoriesAfterFristTransaction[0]).toEqual(
       expect.objectContaining({
@@ -402,18 +369,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData2);
 
     const financeSourceHistoriesAfterSecondTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
-
+      await getFinanceSourceHistories();
     // Verify balance
     expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2);
 
@@ -441,17 +397,7 @@ describe("updating balance", () => {
     await addNewTransaction(formData3);
 
     const financeSourceHistoriesAfterThirdTransaction =
-      await db.financeSourceHistory.findMany({
-        where: {
-          financeSourceId: financeSource.id,
-          userId: user.id,
-        },
-        orderBy: {
-          transaction: {
-            date: "asc",
-          },
-        },
-      });
+      await getFinanceSourceHistories();
 
     expect(financeSourceHistoriesAfterThirdTransaction).toHaveLength(3);
     expect(financeSourceHistoriesAfterThirdTransaction[0]).toEqual(
