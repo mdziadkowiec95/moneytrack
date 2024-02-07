@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:": "dotenv -e .env.test prisma migrate dev && dotenv -e .env.test vitest",
+    "test": "dotenv -e .env.test prisma migrate dev && dotenv -e .env.test vitest",
     "test-ci": "dotenv -e .env.test prisma migrate dev && dotenv -e .env.test vitest run",
     "prepare": "husky"
   },

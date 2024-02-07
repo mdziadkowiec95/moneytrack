@@ -153,13 +153,15 @@ function addNewTransaction(formData) {
 }
 exports.addNewTransaction = addNewTransaction;
 function updateTransaction(formData) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var session, transaction;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var session, transaction, transactions, lastTransaction, balanceDelta, balance, _c, _d, _e, _f, _g, _h, updateExistingTransactionQuery, balanceUpdateAction, updateAffectedFinanceSourceHistoryBalancesQuery;
+        var _j;
+        return __generator(this, function (_k) {
+            switch (_k.label) {
                 case 0: return [4 /*yield*/, auth_1.getAuthServerSession()];
                 case 1:
-                    session = _a.sent();
+                    session = _k.sent();
                     // @TODO try to type the user object in auth
                     if (!(session === null || session === void 0 ? void 0 : session.user.id)) {
                         throw new Error("User not authenticated");
@@ -167,31 +169,113 @@ function updateTransaction(formData) {
                     transaction = {
                         id: formData.get("id"),
                         title: formData.get("title"),
+                        description: formData.get("description"),
                         amount: Number(formData.get("amount")),
                         date: formData.get("date"),
                         type: formData.get("type"),
                         financeSourceId: formData.get("financeSourceId")
                     };
+                    console.log({ transaction: transaction });
                     editTransactionSchema.parse(transaction); // Validate the transaction data
-                    if (!transaction.id) return [3 /*break*/, 3];
-                    return [4 /*yield*/, db_1.db.transaction.update({
+                    if (!transaction.id) return [3 /*break*/, 6];
+                    return [4 /*yield*/, db_1.db.transaction.findMany({
                             where: {
-                                id: transaction.id,
-                                userId: session === null || session === void 0 ? void 0 : session.user.id
+                                date: {
+                                    lte: new Date(transaction.date)
+                                },
+                                id: {
+                                    not: transaction.id
+                                }
                             },
-                            data: {
-                                id: transaction.id,
-                                title: transaction.title,
-                                amount: transaction.amount,
-                                date: transaction.date,
-                                type: transaction.type,
-                                financeSourceId: transaction.financeSourceId
-                            }
+                            include: {
+                                financeSourceHistory: true
+                            },
+                            orderBy: [
+                                {
+                                    date: "desc"
+                                },
+                                {
+                                    updatedAt: "desc"
+                                },
+                            ],
+                            take: 1
                         })];
                 case 2:
-                    _a.sent();
-                    _a.label = 3;
+                    transactions = _k.sent();
+                    lastTransaction = transactions[0];
+                    console.log({ lastTransaction: lastTransaction });
+                    balanceDelta = transaction.type === client_1.TransactionType.INCOME
+                        ? transaction.amount
+                        : -transaction.amount;
+                    balance = balanceDelta;
+                    // If there is previous transaction THEN calculate the new balance based on the previous transaction balance
+                    if (lastTransaction) {
+                        console.log("lastTransaction.financeSourceHistory?.balance", (_a = lastTransaction.financeSourceHistory) === null || _a === void 0 ? void 0 : _a.balance);
+                        console.log("balanceDelta", balanceDelta);
+                        balance = ((_b = lastTransaction.financeSourceHistory) === null || _b === void 0 ? void 0 : _b.balance) + balanceDelta;
+                    }
+                    _d = (_c = console).log;
+                    _e = ["all"];
+                    return [4 /*yield*/, db_1.db.transaction.findMany()];
                 case 3:
+                    _d.apply(_c, _e.concat([_k.sent()]));
+                    _g = (_f = console).log;
+                    _h = ["all his"];
+                    return [4 /*yield*/, db_1.db.financeSourceHistory.findMany()];
+                case 4:
+                    _g.apply(_f, _h.concat([_k.sent()]));
+                    updateExistingTransactionQuery = db_1.db.transaction.update({
+                        where: {
+                            id: transaction.id,
+                            userId: session === null || session === void 0 ? void 0 : session.user.id
+                        },
+                        data: {
+                            id: transaction.id,
+                            title: transaction.title,
+                            description: transaction.description,
+                            amount: transaction.amount,
+                            date: transaction.date,
+                            type: transaction.type,
+                            financeSourceId: transaction.financeSourceId,
+                            financeSourceHistory: {
+                                update: {
+                                    where: {
+                                        transactionId: transaction.id
+                                    },
+                                    data: {
+                                        balance: balance
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    balanceUpdateAction = transaction.type === client_1.TransactionType.INCOME ? "increment" : "decrement";
+                    updateAffectedFinanceSourceHistoryBalancesQuery = db_1.db.financeSourceHistory.updateMany({
+                        where: {
+                            financeSourceId: transaction.financeSourceId,
+                            transaction: {
+                                date: {
+                                    gte: new Date(transaction.date)
+                                },
+                                id: {
+                                    not: transaction.id
+                                }
+                            }
+                        },
+                        data: {
+                            balance: (_j = {},
+                                _j[balanceUpdateAction] = transaction.amount,
+                                _j)
+                        }
+                    });
+                    return [4 /*yield*/, db_1.db.$transaction([
+                            updateExistingTransactionQuery,
+                            updateAffectedFinanceSourceHistoryBalancesQuery,
+                        ])];
+                case 5:
+                    _k.sent();
+                    _k.label = 6;
+                case 6:
                     // TODO - should redirect to transaction VIEW page
                     navigation_1.redirect("/app/transactions");
                     return [2 /*return*/];
