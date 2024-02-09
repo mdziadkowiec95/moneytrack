@@ -1,7 +1,6 @@
 import {
   afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -12,20 +11,18 @@ import {
 import { db } from "@/utils/db";
 import {
   FinanceSource,
-  FinanceSourceHistory,
   FinanceSourceType,
   Transaction,
   TransactionType,
   User,
 } from "@prisma/client";
+
 import { getAuthServerSession } from "@/utils/auth";
 import {
   addNewAccount,
   addNewTransaction,
   updateTransaction,
 } from "../actions";
-import { a } from "vitest/dist/suite-ghspeorC.js";
-import { add } from "date-fns";
 
 vi.mock("@/utils/auth", () => {
   return {
@@ -90,12 +87,12 @@ const addNewTransactionUsingAction = async (
 ) => {
   const formData = new FormData();
 
-  formData.append("id", data.id);
-  formData.append("title", data.title);
-  formData.append("amount", data.amount);
-  formData.append("description", data.description);
-  formData.append("date", data.date?.toISOString());
-  formData.append("type", data.type);
+  formData.append("id", `${data.id}`);
+  formData.append("title", `${data.title}`);
+  formData.append("amount", `${data.amount}`);
+  formData.append("description", `${data.description}`);
+  formData.append("date", `${data.date?.toISOString()}`);
+  formData.append("type", `${data.type}`);
   formData.append("financeSourceId", financeSource.id);
 
   await addNewTransaction(formData);
@@ -104,12 +101,12 @@ const addNewTransactionUsingAction = async (
 const updateTransactionUsingAction = async (data: Partial<Transaction>) => {
   const formData = new FormData();
 
-  formData.append("id", data.id);
-  formData.append("title", data.title);
-  formData.append("amount", data.amount);
-  formData.append("description", data.description);
-  formData.append("date", data.date?.toISOString());
-  formData.append("type", data.type);
+  formData.append("id", `${data.id}`);
+  formData.append("title", `${data.title}`);
+  formData.append("amount", `${data.amount}`);
+  formData.append("description", `${data.description}`);
+  formData.append("date", `${data.date?.toISOString()}`);
+  formData.append("type", `${data.type}`);
   formData.append("financeSourceId", financeSource.id);
 
   await updateTransaction(formData);
@@ -159,7 +156,7 @@ beforeEach(async () => {
   //@ts-expect-error - fix this later
   getAuthServerSession.mockResolvedValue({ user });
 
-  financeSource = await createAccount();
+  financeSource = (await createAccount()) as FinanceSource;
 });
 
 afterEach(async () => {
@@ -237,7 +234,7 @@ describe("addNewTransaction", () => {
       // Add first transaction
       await addNewTransactionUsingAction({
         title: "Integration Test 1 INCOME",
-        amount: "300",
+        amount: 300,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
@@ -256,7 +253,7 @@ describe("addNewTransaction", () => {
       // Add second transaction
       await addNewTransactionUsingAction({
         title: "Integration Test 2 OUTCOME",
-        amount: "50",
+        amount: 50,
         date: new Date(2024, 1, 7, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
@@ -282,7 +279,7 @@ describe("addNewTransaction", () => {
       // Add first transaction
       await addNewTransactionUsingAction({
         title: "Integration Test 1 INCOME",
-        amount: "500",
+        amount: 500,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
@@ -300,7 +297,7 @@ describe("addNewTransaction", () => {
 
       await addNewTransactionUsingAction({
         title: "Integration Test 2 OUTCOME",
-        amount: "150",
+        amount: 150,
         date: new Date(2024, 1, 8, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
@@ -325,7 +322,7 @@ describe("addNewTransaction", () => {
 
       await addNewTransactionUsingAction({
         title: "Integration Test 3 OUTCOME",
-        amount: "20",
+        amount: 20,
         date: new Date(2024, 1, 3, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
@@ -356,7 +353,7 @@ describe("addNewTransaction", () => {
     test("should update balance history properly when adding new transaction in the exactly the same time as existing history record", async () => {
       await addNewTransactionUsingAction({
         title: "Integration Test 1 INCOME",
-        amount: "500",
+        amount: 500,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
@@ -373,7 +370,7 @@ describe("addNewTransaction", () => {
 
       await addNewTransactionUsingAction({
         title: "Integration Test 2 OUTCOME",
-        amount: "150",
+        amount: 150,
         date: new Date(2024, 1, 8, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
@@ -398,7 +395,7 @@ describe("addNewTransaction", () => {
       // Add third transaction with the same date as the first transaction
       await addNewTransactionUsingAction({
         title: "Integration Test 1 INCOME",
-        amount: "10",
+        amount: 10,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
@@ -431,7 +428,7 @@ describe("updateTransaction", () => {
   test("should update transaction properly", async () => {
     await addNewTransactionUsingAction({
       title: "Integration Test 1 INCOME",
-      amount: "500",
+      amount: 500,
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
