@@ -66,6 +66,11 @@ const getFinanceSourceHistories = async () =>
           updatedAt: "asc",
         },
       },
+      {
+        transaction: {
+          createdAt: "asc",
+        },
+      },
     ],
   });
 
@@ -76,16 +81,38 @@ const getAllTransactions = async () =>
     },
   });
 
-const restoreTransactions = async () => {
-  const deleteTransactions = db.transaction.deleteMany();
-  const deleteFinanceSourceHistories = db.financeSourceHistory.deleteMany();
-  // const deleteFinanceSources = db.financeSource.deleteMany();
+const addNewTransactionUsingAction = async (
+  data: Partial<
+    Transaction & {
+      date: Date;
+    }
+  >
+) => {
+  const formData = new FormData();
 
-  await db.$transaction([
-    deleteTransactions,
-    deleteFinanceSourceHistories,
-    // deleteFinanceSources,
-  ]);
+  formData.append("id", data.id);
+  formData.append("title", data.title);
+  formData.append("amount", data.amount);
+  formData.append("description", data.description);
+  formData.append("date", data.date?.toISOString());
+  formData.append("type", data.type);
+  formData.append("financeSourceId", financeSource.id);
+
+  await addNewTransaction(formData);
+};
+
+const updateTransactionUsingAction = async (data: Partial<Transaction>) => {
+  const formData = new FormData();
+
+  formData.append("id", data.id);
+  formData.append("title", data.title);
+  formData.append("amount", data.amount);
+  formData.append("description", data.description);
+  formData.append("date", data.date?.toISOString());
+  formData.append("type", data.type);
+  formData.append("financeSourceId", financeSource.id);
+
+  await updateTransaction(formData);
 };
 
 const restoreDB = async () => {
@@ -148,23 +175,21 @@ afterAll(async () => {
 describe("addNewTransaction", () => {
   describe("when adding first transaction", () => {
     test("should create new transaction properly when no transactions added yet", async () => {
-      const formData = new FormData();
+      await addNewTransactionUsingAction({
+        title: "Integration Test 1 INCOME",
+        amount: 1000,
+        date: new Date(2024, 1, 7, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+      });
 
-      formData.append("title", "Integration Test 1 INCOME");
-      formData.append("amount", "1000");
-      formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-      formData.append("type", TransactionType.INCOME);
-      formData.append("financeSourceId", financeSource.id);
-
-      await addNewTransaction(formData);
-
-      const tranasctionsInDB = await db.transaction.findMany({
+      const transactionsInDB = await db.transaction.findMany({
         where: { title: "Integration Test 1 INCOME" },
       });
 
-      expect(tranasctionsInDB).toHaveLength(1);
+      expect(transactionsInDB).toHaveLength(1);
 
-      expect(tranasctionsInDB[0]).toEqual({
+      expect(transactionsInDB[0]).toEqual({
         id: expect.any(String),
         amount: 1000,
         createdAt: expect.any(Date),
@@ -179,15 +204,13 @@ describe("addNewTransaction", () => {
     });
 
     test("should create related finance source history entry with updated balance", async () => {
-      const formData = new FormData();
-
-      formData.append("title", "Integration Test 1 INCOME");
-      formData.append("amount", "1000");
-      formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-      formData.append("type", TransactionType.INCOME);
-      formData.append("financeSourceId", financeSource.id);
-
-      await addNewTransaction(formData);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 1 INCOME",
+        amount: 1000,
+        date: new Date(2024, 1, 7, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const transactions = await db.transaction.findMany({
         include: {
@@ -211,16 +234,14 @@ describe("addNewTransaction", () => {
 
   describe("when updating balance", () => {
     test("should update balance history properly when adding new transaction in the future", async () => {
-      const formData = new FormData();
-
-      formData.append("title", "Integration Test 1 INCOME");
-      formData.append("amount", "300");
-      formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-      formData.append("type", TransactionType.INCOME);
-      formData.append("financeSourceId", financeSource.id);
-
       // Add first transaction
-      await addNewTransaction(formData);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 1 INCOME",
+        amount: "300",
+        date: new Date(2024, 1, 7, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterFristTransaction =
         await getFinanceSourceHistories();
@@ -232,16 +253,14 @@ describe("addNewTransaction", () => {
         })
       );
 
-      const formData2 = new FormData();
-
-      formData2.append("title", "Integration Test 2 OUTCOME");
-      formData2.append("amount", "50");
-      formData2.append("date", new Date(2024, 1, 7, 2, 0, 0).toISOString());
-      formData2.append("type", TransactionType.OUTCOME);
-      formData2.append("financeSourceId", financeSource.id);
-
       // Add second transaction
-      await addNewTransaction(formData2);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 2 OUTCOME",
+        amount: "50",
+        date: new Date(2024, 1, 7, 2, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterSecondTransaction =
         await getFinanceSourceHistories();
@@ -260,16 +279,14 @@ describe("addNewTransaction", () => {
     });
 
     test("should update balance history properly when adding new transaction in the past", async () => {
-      const formData = new FormData();
-
-      formData.append("title", "Integration Test 1 INCOME");
-      formData.append("amount", "500");
-      formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-      formData.append("type", TransactionType.INCOME);
-      formData.append("financeSourceId", financeSource.id);
-
       // Add first transaction
-      await addNewTransaction(formData);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 1 INCOME",
+        amount: "500",
+        date: new Date(2024, 1, 7, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterFristTransaction =
         await getFinanceSourceHistories();
@@ -281,16 +298,13 @@ describe("addNewTransaction", () => {
         })
       );
 
-      const formData2 = new FormData();
-
-      formData2.append("title", "Integration Test 2 OUTCOME");
-      formData2.append("amount", "150");
-      formData2.append("date", new Date(2024, 1, 8, 2, 0, 0).toISOString());
-      formData2.append("type", TransactionType.OUTCOME);
-      formData2.append("financeSourceId", financeSource.id);
-
-      // Add second transaction
-      await addNewTransaction(formData2);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 2 OUTCOME",
+        amount: "150",
+        date: new Date(2024, 1, 8, 2, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterSecondTransaction =
         await getFinanceSourceHistories();
@@ -309,16 +323,13 @@ describe("addNewTransaction", () => {
         })
       );
 
-      const formData3 = new FormData();
-
-      formData3.append("title", "Integration Test 3 OUTCOME");
-      formData3.append("amount", "20");
-      formData3.append("date", new Date(2024, 1, 3, 2, 0, 0).toISOString());
-      formData3.append("type", TransactionType.OUTCOME);
-      formData3.append("financeSourceId", financeSource.id);
-
-      // Add second transaction
-      await addNewTransaction(formData3);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 3 OUTCOME",
+        amount: "20",
+        date: new Date(2024, 1, 3, 2, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterThirdTransaction =
         await getFinanceSourceHistories();
@@ -343,16 +354,13 @@ describe("addNewTransaction", () => {
     });
 
     test("should update balance history properly when adding new transaction in the exactly the same time as existing history record", async () => {
-      const formData = new FormData();
-
-      formData.append("title", "Integration Test 1 INCOME");
-      formData.append("amount", "500");
-      formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-      formData.append("type", TransactionType.INCOME);
-      formData.append("financeSourceId", financeSource.id);
-
-      // Add first transaction
-      await addNewTransaction(formData);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 1 INCOME",
+        amount: "500",
+        date: new Date(2024, 1, 7, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterFristTransaction =
         await getFinanceSourceHistories();
@@ -363,16 +371,13 @@ describe("addNewTransaction", () => {
         })
       );
 
-      const formData2 = new FormData();
-
-      formData2.append("title", "Integration Test 2 OUTCOME");
-      formData2.append("amount", "150");
-      formData2.append("date", new Date(2024, 1, 8, 2, 0, 0).toISOString());
-      formData2.append("type", TransactionType.OUTCOME);
-      formData2.append("financeSourceId", financeSource.id);
-
-      // Add second transaction
-      await addNewTransaction(formData2);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 2 OUTCOME",
+        amount: "150",
+        date: new Date(2024, 1, 8, 2, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterSecondTransaction =
         await getFinanceSourceHistories();
@@ -391,16 +396,13 @@ describe("addNewTransaction", () => {
       );
 
       // Add third transaction with the same date as the first transaction
-      const formData3 = new FormData();
-
-      formData3.append("title", "Integration Test 1 INCOME");
-      formData3.append("amount", "10");
-      formData3.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-      formData3.append("type", TransactionType.INCOME);
-      formData3.append("financeSourceId", financeSource.id);
-
-      // Add first transaction
-      await addNewTransaction(formData3);
+      await addNewTransactionUsingAction({
+        title: "Integration Test 1 INCOME",
+        amount: "10",
+        date: new Date(2024, 1, 7, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+      });
 
       const financeSourceHistoriesAfterThirdTransaction =
         await getFinanceSourceHistories();
@@ -427,36 +429,27 @@ describe("addNewTransaction", () => {
 
 describe("updateTransaction", () => {
   test("should update transaction properly", async () => {
-    const formData = new FormData();
-
-    formData.append("title", "Integration Test 1 INCOME");
-    formData.append("amount", "500");
-    formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-    formData.append("type", TransactionType.INCOME);
-    formData.append("financeSourceId", financeSource.id);
-
-    await addNewTransaction(formData);
+    await addNewTransactionUsingAction({
+      title: "Integration Test 1 INCOME",
+      amount: "500",
+      date: new Date(2024, 1, 7, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+    });
 
     const [firstTransaction] = await getAllTransactions();
 
-    const formDataUpdate = new FormData();
-
-    formDataUpdate.append("id", firstTransaction.id);
-    formDataUpdate.append("title", "Integration Test 1 INCOME Updated");
-    formDataUpdate.append("amount", "1000");
-    formDataUpdate.append("description", "Example description");
-    formDataUpdate.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-    formDataUpdate.append("type", TransactionType.OUTCOME);
-    formDataUpdate.append("financeSourceId", financeSource.id);
-
-    // Mock any dependencies or external functions used by the action
-
-    // Call the updateTransaction action
-    await updateTransaction(formDataUpdate);
+    await updateTransactionUsingAction({
+      id: firstTransaction.id,
+      title: "Integration Test 1 INCOME Updated",
+      amount: 1000,
+      description: "Example description",
+      date: new Date(2024, 1, 7, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+    });
 
     const allTransactions = await getAllTransactions();
-
-    console.log({ allTransactions });
 
     expect(allTransactions).toHaveLength(1);
     expect(allTransactions[0]).toEqual({
@@ -473,21 +466,7 @@ describe("updateTransaction", () => {
     });
   });
 
-  test("should update balances properly when updating transaction which is the most recent without changing date", async () => {
-    const addNewTransactionUsingAction = async (data: Partial<Transaction>) => {
-      const formData = new FormData();
-
-      formData.append("id", data.id);
-      formData.append("title", data.title);
-      formData.append("amount", data.amount);
-      formData.append("description", data.description);
-      formData.append("date", data.date?.toISOString());
-      formData.append("type", data.type);
-      formData.append("financeSourceId", financeSource.id);
-
-      await addNewTransaction(formData);
-    };
-
+  test("should update balances properly when updating transaction which is the most recent and date does not change", async () => {
     await addNewTransactionUsingAction({
       title: "Integration Test 1 INCOME",
       amount: 150,
@@ -512,18 +491,15 @@ describe("updateTransaction", () => {
 
     expect(initialTransactions).toHaveLength(2);
 
-    const formData = new FormData();
-
-    formData.append("id", secondTransaction.id);
-    formData.append("title", "Integration Test 2 OUTCOME Updated");
-    formData.append("amount", "700");
-    formData.append("description", "Example description");
-    formData.append("date", new Date(2024, 1, 7, 0, 0, 0).toISOString());
-    formData.append("type", TransactionType.OUTCOME);
-    formData.append("financeSourceId", financeSource.id);
-
-    // Call the updateTransaction action
-    await updateTransaction(formData);
+    await updateTransactionUsingAction({
+      id: secondTransaction.id,
+      title: "Integration Test 2 OUTCOME Updated",
+      amount: 700,
+      description: "Example description",
+      date: new Date(2024, 1, 7, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+    });
 
     const allTransactionsAfterUpdate = await db.transaction.findMany({
       orderBy: {
@@ -532,8 +508,6 @@ describe("updateTransaction", () => {
     });
 
     const financeSourceHistories = await getFinanceSourceHistories();
-
-    console.log({ financeSourceHistories });
 
     expect(allTransactionsAfterUpdate).toHaveLength(2);
     expect(allTransactionsAfterUpdate[1]).toEqual({
@@ -558,8 +532,355 @@ describe("updateTransaction", () => {
     );
   });
 
-  // test("should update balances properly when updating transaction which is the most recent and changing date to the past", async () => {});
-  // test("should update balances properly when updating transaction which is the oldest one changing date to the future", async () => {});
-  // test("should update balances properly when updating transaction which is in the middle recent and changing date to the future", async () => {});
-  // test("should update balances properly when updating transaction which is in the middle recent and changing date to the same date as many others", async () => {});
+  test("should update balances properly when updating transaction which is the most recent and changing date to the past", async () => {
+    await addNewTransactionUsingAction({
+      title: "Integration Test 1 INCOME",
+      amount: 150,
+      date: new Date(2024, 1, 5, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Integration Test 2 OUTCOME",
+      amount: 400,
+      date: new Date(2024, 1, 6, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Integration Test 3 INCOME",
+      amount: 300,
+      date: new Date(2024, 1, 7, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    const initialTransactions = await getAllTransactions();
+
+    const [, , thirdTransaction] = initialTransactions;
+
+    expect(initialTransactions).toHaveLength(3);
+
+    await updateTransactionUsingAction({
+      id: thirdTransaction.id,
+      title: "Integration Test 3 OUTCOME Updated",
+      amount: 700,
+      description: "Example description",
+      date: new Date(2024, 1, 3, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+    });
+
+    const allTransactionsAfterUpdate = await getAllTransactions();
+
+    const financeSourceHistories = await getFinanceSourceHistories();
+
+    expect(allTransactionsAfterUpdate).toHaveLength(3);
+    expect(allTransactionsAfterUpdate[0]).toEqual({
+      amount: 700,
+      createdAt: expect.any(Date),
+      date: new Date("2024-02-02T23:00:00.000Z"),
+      description: "Example description",
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[0].id,
+      title: "Integration Test 3 OUTCOME Updated",
+      type: TransactionType.OUTCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(financeSourceHistories).toHaveLength(3);
+    expect(financeSourceHistories[0]).toEqual(
+      expect.objectContaining({ balance: -700 })
+    );
+    expect(financeSourceHistories[1]).toEqual(
+      expect.objectContaining({ balance: -550 })
+    );
+    expect(financeSourceHistories[2]).toEqual(
+      expect.objectContaining({ balance: -950 })
+    );
+  });
+
+  test("should update balances properly when updating transaction which is the oldest one changing date to the future as last one", async () => {
+    await addNewTransactionUsingAction({
+      title: "Test 1 OUTCOME",
+      amount: 150,
+      date: new Date(2024, 1, 6, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 2 INCOME",
+      amount: 500,
+      date: new Date(2024, 1, 7, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 3 INCOME",
+      amount: 300,
+      date: new Date(2024, 1, 5, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    const financeSourceHistoriesBefore = await getFinanceSourceHistories();
+
+    const initialTransactions = await getAllTransactions();
+
+    const [oldestTransaction] = initialTransactions;
+
+    expect(initialTransactions).toHaveLength(3);
+
+    await updateTransactionUsingAction({
+      id: oldestTransaction.id,
+      title: "Test 3 OUTCOME Updated",
+      amount: 350,
+      description: "Example description",
+      date: new Date(2024, 1, 8, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+    });
+
+    const allTransactionsAfterUpdate = await getAllTransactions();
+    const financeSourceHistories = await getFinanceSourceHistories();
+
+    expect(allTransactionsAfterUpdate).toHaveLength(3);
+    expect(allTransactionsAfterUpdate[0]).toEqual({
+      amount: 150,
+      createdAt: expect.any(Date),
+      date: new Date(2024, 1, 6, 0, 0, 0),
+      description: null,
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[0].id,
+      title: "Test 1 OUTCOME",
+      type: TransactionType.OUTCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(allTransactionsAfterUpdate[2]).toEqual({
+      amount: 350,
+      createdAt: expect.any(Date),
+      date: new Date(2024, 1, 8, 0, 0, 0),
+      description: "Example description",
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[2].id,
+      title: "Test 3 OUTCOME Updated",
+      type: TransactionType.OUTCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(financeSourceHistories).toHaveLength(3);
+    expect(financeSourceHistories[0]).toEqual(
+      expect.objectContaining({ balance: -150 })
+    );
+    expect(financeSourceHistories[1]).toEqual(
+      expect.objectContaining({ balance: 350 })
+    );
+    expect(financeSourceHistories[2]).toEqual(
+      expect.objectContaining({ balance: 0 })
+    );
+  });
+
+  test("should update balances properly when updating transaction which is the oldest changing date to the future but middle", async () => {
+    await addNewTransactionUsingAction({
+      title: "Test 1 OUTCOME",
+      amount: 800,
+      date: new Date(2024, 1, 6, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 2 INCOME",
+      amount: 200,
+      date: new Date(2024, 1, 9, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 3 INCOME",
+      amount: 500,
+      date: new Date(2024, 1, 13, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    const financeSourceHistoriesBefore = await getFinanceSourceHistories();
+
+    const initialTransactions = await getAllTransactions();
+
+    const [firstTransaction] = initialTransactions;
+
+    expect(initialTransactions).toHaveLength(3);
+
+    await updateTransactionUsingAction({
+      id: firstTransaction.id,
+      title: "Test 1 OUTCOME Updated",
+      amount: 400,
+      description: "Example description",
+      date: new Date(2024, 1, 11, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+    });
+
+    const allTransactionsAfterUpdate = await getAllTransactions();
+    const financeSourceHistories = await getFinanceSourceHistories();
+
+    expect(allTransactionsAfterUpdate).toHaveLength(3);
+    expect(allTransactionsAfterUpdate[0]).toEqual({
+      amount: 200,
+      createdAt: expect.any(Date),
+      date: new Date(2024, 1, 9, 0, 0, 0),
+      description: null,
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[0].id,
+      title: "Test 2 INCOME",
+      type: TransactionType.INCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(allTransactionsAfterUpdate[2]).toEqual({
+      amount: 500,
+      createdAt: expect.any(Date),
+      date: new Date(2024, 1, 13, 0, 0, 0),
+      description: null,
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[2].id,
+      title: "Test 3 INCOME",
+      type: TransactionType.INCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(financeSourceHistories).toHaveLength(3);
+    expect(financeSourceHistories[0]).toEqual(
+      expect.objectContaining({ balance: 200 })
+    );
+    expect(financeSourceHistories[1]).toEqual(
+      expect.objectContaining({ balance: -200 })
+    );
+    expect(financeSourceHistories[2]).toEqual(
+      expect.objectContaining({ balance: 300 })
+    );
+
+    // -800 -> -600 -> -100
+    // 200 -> -200 -> 300
+  });
+  test("should update balances properly when updating transaction which is in the middle recent and changing date to the same date as many others in the future", async () => {
+    await addNewTransactionUsingAction({
+      title: "Test 1 OUTCOME",
+      amount: 100,
+      date: new Date(2024, 1, 6, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 2 INCOME",
+      amount: 300,
+      date: new Date(2024, 1, 8, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 3 INCOME",
+      amount: 200,
+      date: new Date(2024, 1, 9, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    await addNewTransactionUsingAction({
+      title: "Test 4 INCOME",
+      amount: 500,
+      date: new Date(2024, 1, 13, 0, 0, 0),
+      type: TransactionType.INCOME,
+      financeSourceId: financeSource.id,
+      userId: user.id,
+    });
+
+    const financeSourceHistoriesBefore = await getFinanceSourceHistories();
+
+    const initialTransactions = await getAllTransactions();
+
+    const [, secondTransaction] = initialTransactions;
+
+    expect(initialTransactions).toHaveLength(4);
+
+    await updateTransactionUsingAction({
+      id: secondTransaction.id,
+      title: "Test 2 INCOME Updated",
+      amount: 400,
+      description: "Example description",
+      date: new Date(2024, 1, 9, 0, 0, 0),
+      type: TransactionType.OUTCOME,
+      financeSourceId: financeSource.id,
+    });
+
+    const allTransactionsAfterUpdate = await getAllTransactions();
+    const financeSourceHistories = await getFinanceSourceHistories();
+
+    expect(allTransactionsAfterUpdate).toHaveLength(4);
+    expect(allTransactionsAfterUpdate[0]).toEqual({
+      amount: 100,
+      createdAt: expect.any(Date),
+      date: new Date(2024, 1, 6, 0, 0, 0),
+      description: null,
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[0].id,
+      title: "Test 1 OUTCOME",
+      type: TransactionType.OUTCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(allTransactionsAfterUpdate[2]).toEqual({
+      amount: 400,
+      createdAt: expect.any(Date),
+      date: new Date(2024, 1, 9, 0, 0, 0),
+      description: "Example description",
+      financeSourceId: financeSource.id,
+      id: allTransactionsAfterUpdate[2].id,
+      title: "Test 2 INCOME Updated",
+      type: TransactionType.OUTCOME,
+      updatedAt: expect.any(Date),
+      userId: user.id,
+    });
+
+    expect(financeSourceHistories).toHaveLength(4);
+    expect(financeSourceHistories[0]).toEqual(
+      expect.objectContaining({ balance: -100 })
+    );
+    expect(financeSourceHistories[1]).toEqual(
+      expect.objectContaining({ balance: 100 })
+    );
+    expect(financeSourceHistories[2]).toEqual(
+      expect.objectContaining({ balance: -300 })
+    );
+    expect(financeSourceHistories[3]).toEqual(
+      expect.objectContaining({ balance: 200 })
+    );
+  });
 });

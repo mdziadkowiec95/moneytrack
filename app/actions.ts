@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { add, sub } from "date-fns";
 import { calculateBalance } from "@/utils/transactions";
+import { addMilliseconds } from "date-fns";
 
 const baseTransactionSchema = z.object({
   title: z.string(),
@@ -60,6 +61,9 @@ export async function addNewTransaction(formData: FormData) {
       {
         updatedAt: "desc",
       },
+      {
+        createdAt: "desc",
+      },
     ],
     take: 1,
   });
@@ -73,6 +77,8 @@ export async function addNewTransaction(formData: FormData) {
     transaction.type === TransactionType.INCOME
       ? transaction.amount
       : -transaction.amount;
+
+  console.log({ lastTransaction, balanceDelta });
 
   let balance = balanceDelta;
 
@@ -145,7 +151,30 @@ export async function updateTransaction(formData: FormData) {
     type: formData.get("type") as TransactionType,
     financeSourceId: formData.get("financeSourceId") as string,
   };
-  console.log({ transaction });
+
+  const transactionPreviousState = await db.transaction.findUnique({
+    where: {
+      id: transaction.id,
+    },
+  });
+
+  const balanceUpdateAction =
+    transaction.type === TransactionType.INCOME ? "increment" : "decrement";
+
+  const balanceUpdateActionReverted =
+    transactionPreviousState.type === TransactionType.INCOME
+      ? "decrement"
+      : "increment";
+
+  console.log({ transactionPreviousState });
+
+  const isMovigToTheFuture =
+    new Date(transaction.date) > new Date(transactionPreviousState.date);
+  const isMovigToThePast =
+    new Date(transaction.date) < new Date(transactionPreviousState.date);
+  const isUpdatingWithoutChangingDate =
+    new Date(transaction.date).getTime() ===
+    new Date(transactionPreviousState.date).getTime();
 
   editTransactionSchema.parse(transaction); // Validate the transaction data
 
@@ -186,72 +215,386 @@ export async function updateTransaction(formData: FormData) {
 
     let balance = balanceDelta;
 
-    // If there is previous transaction THEN calculate the new balance based on the previous transaction balance
-    if (lastTransaction) {
-      console.log(
-        "lastTransaction.financeSourceHistory?.balance",
-        lastTransaction.financeSourceHistory?.balance
-      );
-      console.log("balanceDelta", balanceDelta);
-      balance = lastTransaction.financeSourceHistory?.balance + balanceDelta;
-    }
-
-    console.log("all", await db.transaction.findMany());
-    console.log("all his", await db.financeSourceHistory.findMany());
-
-    const updateExistingTransactionQuery = db.transaction.update({
-      where: {
-        id: transaction.id,
-        userId: session?.user.id,
-      },
-      data: {
-        id: transaction.id,
-        title: transaction.title,
-        description: transaction.description,
-        amount: transaction.amount,
-        date: transaction.date,
-        type: transaction.type,
-        financeSourceId: transaction.financeSourceId,
-        financeSourceHistory: {
-          update: {
-            where: {
-              transactionId: transaction.id,
+    // SCENARIO 1 - moving to the future
+    if (isMovigToTheFuture || isUpdatingWithoutChangingDate) {
+      // 2. Update all transactions after the transaction date (revert change)
+      const revertPreviousTransactionFromBlances =
+        db.financeSourceHistory.updateMany({
+          where: {
+            financeSourceId: transaction.financeSourceId,
+            transaction: {
+              OR: [
+                {
+                  date: {
+                    gt: new Date(transactionPreviousState.date),
+                  },
+                },
+                {
+                  date: {
+                    equals: new Date(transactionPreviousState.date),
+                  },
+                  AND: {
+                    updatedAt: {
+                      gt: transactionPreviousState.updatedAt,
+                    },
+                  },
+                },
+                {
+                  date: {
+                    equals: new Date(transactionPreviousState.date),
+                  },
+                  AND: {
+                    updatedAt: {
+                      equals: transactionPreviousState.updatedAt,
+                    },
+                    AND: {
+                      createdAt: {
+                        gt: transactionPreviousState.createdAt,
+                      },
+                    },
+                  },
+                },
+              ],
+              id: {
+                not: transaction.id,
+              },
             },
-            data: {
-              balance,
+          },
+          data: {
+            balance: {
+              [balanceUpdateActionReverted]: transactionPreviousState.amount,
             },
+          },
+        });
+
+      // 3. Insert the updated transaction with the new balance (take the last balance before the new transaction date)
+      // FIND last balance which will be the one before the new inserted transaction
+      const balancesAscending = await db.financeSourceHistory.findMany({
+        where: {
+          transaction: {
+            OR: [
+              {
+                date: {
+                  lt: new Date(transaction.date),
+                },
+              },
+              {
+                date: {
+                  equals: new Date(transaction.date),
+                },
+                AND: {
+                  updatedAt: {
+                    lt: new Date(Date.now()),
+                  },
+                },
+              },
+              {
+                date: {
+                  equals: new Date(transaction.date),
+                },
+                AND: [
+                  {
+                    updatedAt: {
+                      equals: new Date(Date.now()),
+                    },
+                  },
+                  // Not needed? We take care to make sure the updated transaction has one milisecond more than the last transaction for "updatedAt" field
+                  // {
+                  //   createdAt: {
+                  //     lt: new Date(Date.now()),
+                  //   },
+                  // },
+                ],
+              },
+            ],
+          },
+          NOT: {
+            id: transactionPreviousState.financeSourceHistoryId,
           },
         },
-      },
-    });
-
-    const balanceUpdateAction =
-      transaction.type === TransactionType.INCOME ? "increment" : "decrement";
-
-    const updateAffectedFinanceSourceHistoryBalancesQuery =
-      db.financeSourceHistory.updateMany({
-        where: {
-          financeSourceId: transaction.financeSourceId,
-          transaction: {
-            date: {
-              gte: new Date(transaction.date),
-            },
-            id: {
-              not: transaction.id,
+        orderBy: [
+          {
+            transaction: {
+              date: "asc",
             },
           },
+          {
+            transaction: {
+              updatedAt: "asc",
+            },
+          },
+          {
+            transaction: {
+              createdAt: "asc",
+            },
+          },
+        ],
+      });
+
+      const balancesDescending = balancesAscending.toReversed();
+
+      let balanceDelta =
+        transaction.type === TransactionType.INCOME
+          ? transaction.amount
+          : -transaction.amount;
+
+      const balanceDeltaReverted =
+        transactionPreviousState.type === TransactionType.INCOME
+          ? -transactionPreviousState.amount
+          : transactionPreviousState.amount;
+
+      const [lastBalanceBeforeUpdate] = balancesDescending;
+
+      const updatedBalance =
+        lastBalanceBeforeUpdate.balance + balanceDeltaReverted + balanceDelta;
+
+      console.log({
+        transactionPreviousState,
+        lastBalanceBeforeUpdate,
+        balanceDelta,
+        balanceDeltaReverted,
+        updatedBalance,
+      });
+
+      const updateExisitingTransactionQuery = db.transaction.update({
+        where: {
+          id: transaction.id,
+          userId: session?.user.id,
         },
         data: {
-          balance: {
-            [balanceUpdateAction]: transaction.amount,
+          id: transaction.id,
+          // A workaround in case there are two transactions with the same date, and updatedAt. Then force the updatedAt to be one milisecond after the last transaction
+          updatedAt: addMilliseconds(
+            lastBalanceBeforeUpdate?.transaction?.date || new Date(),
+            1
+          ),
+          title: transaction.title,
+          description: transaction.description,
+          amount: transaction.amount,
+          date: transaction.date,
+          type: transaction.type,
+          financeSourceId: transaction.financeSourceId,
+          financeSourceHistory: {
+            update: {
+              where: {
+                transactionId: transaction.id,
+              },
+              data: {
+                balance: updatedBalance,
+              },
+            },
           },
         },
       });
 
-    await db.$transaction([
-      updateExistingTransactionQuery,
-      updateAffectedFinanceSourceHistoryBalancesQuery,
-    ]);
+      // 4. Update all the transactions after the new transaction date to reflect the new amount difference
+      const updateFutureBalancesAfterTheUpdatedTransactionDate =
+        db.financeSourceHistory.updateMany({
+          where: {
+            userId: session?.user.id,
+            financeSourceId: transaction.financeSourceId,
+            transaction: {
+              date: {
+                gt: new Date(transaction.date),
+              },
+              id: {
+                not: transaction.id,
+              },
+            },
+          },
+          data: {
+            balance: {
+              increment: balanceDelta,
+            },
+          },
+        });
+
+      const result = await db.$transaction([
+        revertPreviousTransactionFromBlances,
+        updateFutureBalancesAfterTheUpdatedTransactionDate,
+        updateExisitingTransactionQuery,
+      ]);
+
+      return result;
+    }
+
+    // SCENARIO 3 - moving to the past
+    if (isMovigToThePast) {
+      // 1. Update all transactions after the transaction date (revert change)
+
+      const revertPreviousTransactionFromBlances =
+        db.financeSourceHistory.updateMany({
+          where: {
+            financeSourceId: transaction.financeSourceId,
+            transaction: {
+              OR: [
+                {
+                  date: {
+                    gt: new Date(transactionPreviousState.date),
+                  },
+                },
+                {
+                  date: {
+                    equals: new Date(transactionPreviousState.date),
+                  },
+                  AND: {
+                    updatedAt: {
+                      gt: transactionPreviousState.updatedAt,
+                    },
+                  },
+                },
+                // {
+                //   date: {
+                //     equals: new Date(transactionPreviousState.date),
+                //   },
+                //   AND: {
+                //     updatedAt: {
+                //       equals: transactionPreviousState.updatedAt,
+                //     },
+                //   },
+                // },
+              ],
+            },
+          },
+          data: {
+            balance: {
+              [balanceUpdateActionReverted]: transactionPreviousState.amount,
+            },
+          },
+        });
+
+      const balancesAscending = await db.financeSourceHistory.findMany({
+        where: {
+          transaction: {
+            OR: [
+              {
+                date: {
+                  lt: new Date(transaction.date),
+                },
+              },
+              {
+                date: {
+                  equals: new Date(transaction.date),
+                },
+                AND: {
+                  updatedAt: {
+                    lt: new Date(Date.now()),
+                  },
+                },
+              },
+            ],
+          },
+          NOT: {
+            id: transactionPreviousState.financeSourceHistoryId,
+          },
+        },
+        orderBy: [
+          {
+            transaction: {
+              date: "asc",
+            },
+          },
+          {
+            transaction: {
+              updatedAt: "asc",
+            },
+          },
+          {
+            transaction: {
+              createdAt: "asc",
+            },
+          },
+        ],
+      });
+
+      const balancesDescending = balancesAscending.toReversed();
+
+      let balanceDelta =
+        transaction.type === TransactionType.INCOME
+          ? transaction.amount
+          : -transaction.amount;
+
+      const lastBalanceBeforeUpdate = balancesDescending?.[0]?.balance ?? 0;
+      const updatedBalance = lastBalanceBeforeUpdate + balanceDelta;
+
+      console.log({ lastBalanceBeforeUpdate, balanceDelta, updatedBalance });
+
+      const updateExistingTransactionQuery = db.transaction.update({
+        where: {
+          id: transaction.id,
+          userId: session?.user.id,
+        },
+        data: {
+          id: transaction.id,
+          // A workaround in case there are two transactions with the same date, and updatedAt. Then force the updatedAt to be one milisecond after the last transaction
+          updatedAt: addMilliseconds(
+            lastBalanceBeforeUpdate?.transaction?.date || new Date(),
+            1
+          ),
+          title: transaction.title,
+          description: transaction.description,
+          amount: transaction.amount,
+          date: transaction.date,
+          type: transaction.type,
+          financeSourceId: transaction.financeSourceId,
+          financeSourceHistory: {
+            update: {
+              balance: updatedBalance,
+            },
+          },
+        },
+      });
+
+      const updateAffectedFutureFinanceSourceHistoryBalancesQuery =
+        db.financeSourceHistory.updateMany({
+          where: {
+            financeSourceId: transaction.financeSourceId,
+            transaction: {
+              OR: [
+                {
+                  date: {
+                    gt: new Date(transaction.date),
+                  },
+                },
+                {
+                  date: {
+                    equals: new Date(transaction.date),
+                  },
+                  AND: {
+                    updatedAt: {
+                      gt: new Date(Date.now()),
+                    },
+                  },
+                },
+              ],
+
+              NOT: {
+                id: transactionPreviousState.id,
+              },
+            },
+          },
+          data: {
+            balance: {
+              increment: balanceDelta,
+            },
+          },
+        });
+
+      const result = await db.$transaction([
+        revertPreviousTransactionFromBlances,
+        updateAffectedFutureFinanceSourceHistoryBalancesQuery,
+        updateExistingTransactionQuery,
+      ]);
+
+      console.log({ result });
+
+      // 2. // Insert updated balance (get context from the last transaction before the new transaction date OR assume 0).
+
+      // 3. Update all the transactions after the new transaction date to reflect the new amount difference
+      return;
+    }
+
+    // console.log({ transactionResult });
   }
   // TODO - should redirect to transaction VIEW page
   redirect(`/app/transactions`);

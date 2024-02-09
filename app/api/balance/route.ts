@@ -81,10 +81,6 @@ export async function GET(request: Request) {
 
     const [mostRecentTransaction] = mostRecentTransactionData;
 
-    console.log({
-      mostRecentTransaction,
-    });
-
     if (mostRecentTransaction) {
       const mostRecentBalance = await db.financeSourceHistory.findFirst({
         where: {

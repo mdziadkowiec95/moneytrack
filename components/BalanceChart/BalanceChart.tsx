@@ -63,21 +63,22 @@ const generateChartDataForMonth = (
     // IF there is another balance data for the same day AND it has createdAt bigger than already set THEN replace it
     const day = new Date(balance.transaction.date).getDate();
 
-    values[day - 1] = balance.balance;
+    values[day] = balance.balance;
   });
 
   // Fill gaps with last known value
-  let lastValue = 0;
+  let lastValue = precedingBalance.balance || 0;
 
   for (let i = 0; i < values.length; i++) {
     const value = values[i];
 
     if (typeof value === "undefined") {
-      if (i === 0 && precedingBalance) {
-        values[i] = precedingBalance.balance;
-      } else {
-        values[i] = lastValue;
-      }
+      values[i] = lastValue;
+      // if (precedingBalance) {
+      //   values[i] = precedingBalance.balance;
+      // } else {
+
+      // }
     } else {
       lastValue = value;
     }
