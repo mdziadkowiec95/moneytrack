@@ -68,8 +68,6 @@ export async function addNewTransaction(formData: FormData) {
     take: 1,
   });
 
-  console.log({ transactions });
-
   const [lastTransaction] = transactions;
 
   // TODO - Should assume initial balance set when creating account for the default balance
@@ -78,12 +76,10 @@ export async function addNewTransaction(formData: FormData) {
       ? transaction.amount
       : -transaction.amount;
 
-  console.log({ lastTransaction, balanceDelta });
-
   let balance = balanceDelta;
 
   // If there is previous transaction THEN calculate the new balance based on the previous transaction balance
-  if (lastTransaction) {
+  if (lastTransaction && lastTransaction.financeSourceHistory) {
     balance = lastTransaction.financeSourceHistory?.balance + balanceDelta;
   }
 
@@ -156,17 +152,19 @@ export async function updateTransaction(formData: FormData) {
     where: {
       id: transaction.id,
     },
+    include: {
+      financeSourceHistory: true,
+    },
   });
 
-  const balanceUpdateAction =
-    transaction.type === TransactionType.INCOME ? "increment" : "decrement";
+  if (!transactionPreviousState) {
+    throw new Error(`Transaction "${transaction.id}" not found`);
+  }
 
   const balanceUpdateActionReverted =
     transactionPreviousState.type === TransactionType.INCOME
       ? "decrement"
       : "increment";
-
-  console.log({ transactionPreviousState });
 
   const isMovigToTheFuture =
     new Date(transaction.date) > new Date(transactionPreviousState.date);
@@ -206,14 +204,6 @@ export async function updateTransaction(formData: FormData) {
     const [lastTransaction] = transactions;
 
     console.log({ lastTransaction });
-
-    // TODO - Should assume initial balance set when creating account for the default balance
-    let balanceDelta =
-      transaction.type === TransactionType.INCOME
-        ? transaction.amount
-        : -transaction.amount;
-
-    let balance = balanceDelta;
 
     // SCENARIO 1 - moving to the future
     if (isMovigToTheFuture || isUpdatingWithoutChangingDate) {
@@ -298,18 +288,9 @@ export async function updateTransaction(formData: FormData) {
                       equals: new Date(Date.now()),
                     },
                   },
-                  // Not needed? We take care to make sure the updated transaction has one milisecond more than the last transaction for "updatedAt" field
-                  // {
-                  //   createdAt: {
-                  //     lt: new Date(Date.now()),
-                  //   },
-                  // },
                 ],
               },
             ],
-          },
-          NOT: {
-            id: transactionPreviousState.financeSourceHistoryId,
           },
         },
         orderBy: [
@@ -329,6 +310,9 @@ export async function updateTransaction(formData: FormData) {
             },
           },
         ],
+        include: {
+          transaction: true,
+        },
       });
 
       const balancesDescending = balancesAscending.toReversed();
@@ -348,14 +332,6 @@ export async function updateTransaction(formData: FormData) {
       const updatedBalance =
         lastBalanceBeforeUpdate.balance + balanceDeltaReverted + balanceDelta;
 
-      console.log({
-        transactionPreviousState,
-        lastBalanceBeforeUpdate,
-        balanceDelta,
-        balanceDeltaReverted,
-        updatedBalance,
-      });
-
       const updateExisitingTransactionQuery = db.transaction.update({
         where: {
           id: transaction.id,
@@ -364,10 +340,7 @@ export async function updateTransaction(formData: FormData) {
         data: {
           id: transaction.id,
           // A workaround in case there are two transactions with the same date, and updatedAt. Then force the updatedAt to be one milisecond after the last transaction
-          updatedAt: addMilliseconds(
-            lastBalanceBeforeUpdate?.transaction?.date || new Date(),
-            1
-          ),
+          updatedAt: addMilliseconds(new Date(), 1),
           title: transaction.title,
           description: transaction.description,
           amount: transaction.amount,
@@ -443,16 +416,6 @@ export async function updateTransaction(formData: FormData) {
                     },
                   },
                 },
-                // {
-                //   date: {
-                //     equals: new Date(transactionPreviousState.date),
-                //   },
-                //   AND: {
-                //     updatedAt: {
-                //       equals: transactionPreviousState.updatedAt,
-                //     },
-                //   },
-                // },
               ],
             },
           },
@@ -485,7 +448,7 @@ export async function updateTransaction(formData: FormData) {
             ],
           },
           NOT: {
-            id: transactionPreviousState.financeSourceHistoryId,
+            id: transactionPreviousState?.financeSourceHistory?.id,
           },
         },
         orderBy: [
@@ -517,20 +480,16 @@ export async function updateTransaction(formData: FormData) {
       const lastBalanceBeforeUpdate = balancesDescending?.[0]?.balance ?? 0;
       const updatedBalance = lastBalanceBeforeUpdate + balanceDelta;
 
-      console.log({ lastBalanceBeforeUpdate, balanceDelta, updatedBalance });
-
       const updateExistingTransactionQuery = db.transaction.update({
         where: {
           id: transaction.id,
           userId: session?.user.id,
+          financeSourceId: transaction.financeSourceId,
         },
         data: {
           id: transaction.id,
           // A workaround in case there are two transactions with the same date, and updatedAt. Then force the updatedAt to be one milisecond after the last transaction
-          updatedAt: addMilliseconds(
-            lastBalanceBeforeUpdate?.transaction?.date || new Date(),
-            1
-          ),
+          updatedAt: addMilliseconds(new Date(), 1),
           title: transaction.title,
           description: transaction.description,
           amount: transaction.amount,
@@ -580,21 +539,12 @@ export async function updateTransaction(formData: FormData) {
           },
         });
 
-      const result = await db.$transaction([
+      await db.$transaction([
         revertPreviousTransactionFromBlances,
         updateAffectedFutureFinanceSourceHistoryBalancesQuery,
         updateExistingTransactionQuery,
       ]);
-
-      console.log({ result });
-
-      // 2. // Insert updated balance (get context from the last transaction before the new transaction date OR assume 0).
-
-      // 3. Update all the transactions after the new transaction date to reflect the new amount difference
-      return;
     }
-
-    // console.log({ transactionResult });
   }
   // TODO - should redirect to transaction VIEW page
   redirect(`/app/transactions`);
@@ -619,12 +569,6 @@ export async function addNewAccount(formData: FormData) {
       type: account.financeSourceType,
       balance: 0,
       userId: session?.user.id,
-      // financeSourceHistories: {
-      //   create: {
-      //     balance: 0,
-      //     userId: session?.user.id,
-      //   },
-      // },
     },
   });
 
