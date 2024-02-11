@@ -20,4 +20,4 @@ jobs:
           node-version: 20.x
       - run: npm install
       - name: "Test integration"
-        run: docker exec integration-tests-prisma npm run test-ci sh
+        run: docker exec integration-tests-prisma sh npm run test-ci
