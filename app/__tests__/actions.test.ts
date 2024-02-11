@@ -191,7 +191,7 @@ describe("addNewTransaction", () => {
         amount: 1000,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
-        date: new Date("2024-02-06T23:00:00.000Z"),
+        date: new Date(2024, 1, 7, 0, 0, 0),
         description: null,
         financeSourceId: financeSource.id,
         title: "Integration Test 1 INCOME",
@@ -452,7 +452,7 @@ describe("updateTransaction", () => {
     expect(allTransactions[0]).toEqual({
       amount: 1000,
       createdAt: expect.any(Date),
-      date: new Date("2024-02-06T23:00:00.000Z"),
+      date: new Date(2024, 1, 7, 0, 0, 0),
       description: "Example description",
       financeSourceId: financeSource.id,
       id: firstTransaction.id,
@@ -510,7 +510,7 @@ describe("updateTransaction", () => {
     expect(allTransactionsAfterUpdate[1]).toEqual({
       amount: 700,
       createdAt: expect.any(Date),
-      date: new Date("2024-02-06T23:00:00.000Z"),
+      date: new Date(2024, 1, 7, 0, 0, 0),
       description: "Example description",
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[1].id,
@@ -581,7 +581,7 @@ describe("updateTransaction", () => {
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 700,
       createdAt: expect.any(Date),
-      date: new Date("2024-02-02T23:00:00.000Z"),
+      date: new Date(2024, 1, 3, 0, 0, 0),
       description: "Example description",
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[0].id,
