@@ -1,5 +1,4 @@
-import AuthProvider from "@/components/AuthProvider/AuthProvider";
-import BalanceChart from "@/components/BalanceChart/BalanceChart";
+import BalanceChart from '@/components/BalanceChart/BalanceChart'
 import {
   Avatar,
   Box,
@@ -9,9 +8,8 @@ import {
   Grid,
   Heading,
   Text,
-} from "@radix-ui/themes";
-import { NextPage } from "next";
-import Link from "next/link";
+} from '@radix-ui/themes'
+import Link from 'next/link'
 
 const Dashboard = () => {
   return (
@@ -37,7 +35,7 @@ const Dashboard = () => {
 
         <Card size="2" asChild>
           <Link href="/app/transactions">
-            {" "}
+            {' '}
             <Flex gap="3" align="center">
               <Avatar size="3" radius="full" fallback="T" color="indigo" />
               <Box>
@@ -67,7 +65,7 @@ const Dashboard = () => {
         <BalanceChart />
       </Grid>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard

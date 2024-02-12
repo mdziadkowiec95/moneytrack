@@ -1,25 +1,25 @@
-import { getAuthServerSession } from "@/utils/auth";
-import { db } from "@/utils/db";
-import { FinanceSource } from "@prisma/client";
-import { Avatar, Button, Card, Flex, Grid, Text, Box } from "@radix-ui/themes";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import React from "react";
+import { getAuthServerSession } from '@/utils/auth'
+import { db } from '@/utils/db'
+import { FinanceSource } from '@prisma/client'
+import { Avatar, Button, Card, Flex, Grid, Text, Box } from '@radix-ui/themes'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import React from 'react'
 
 const AccountsPage = async () => {
-  const session = await getAuthServerSession();
+  const session = await getAuthServerSession()
 
   if (!session?.user.id) {
-    return redirect("/api/auth/signin");
+    return redirect('/api/auth/signin')
   }
 
   const financeSources = (await db.financeSource.findMany({
     where: {
       userId: session.user.id,
     },
-  })) as FinanceSource[];
+  })) as FinanceSource[]
 
-  console.log({ financeSources });
+  console.log({ financeSources })
 
   return (
     <div>
@@ -65,7 +65,7 @@ const AccountsPage = async () => {
         </Card>
       </Grid>
     </div>
-  );
-};
+  )
+}
 
-export default AccountsPage;
+export default AccountsPage

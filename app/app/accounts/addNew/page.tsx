@@ -1,11 +1,11 @@
-import AccountManagementForm from "@/components/AccountManagementForm/AccountManagementForm";
+import AccountManagementForm from '@/components/AccountManagementForm/AccountManagementForm'
 
 const AddNewAccount = () => {
   return (
     <div>
       <AccountManagementForm />
     </div>
-  );
-};
+  )
+}
 
-export default AddNewAccount;
+export default AddNewAccount

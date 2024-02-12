@@ -1,18 +1,12 @@
-import { getAuthServerSession } from "@/utils/auth";
-import { db } from "@/utils/db";
-import { Transaction } from "@prisma/client";
-import { redirect } from "next/navigation";
+import { getAuthServerSession } from '@/utils/auth'
+import { redirect } from 'next/navigation'
 
 const BalancePage = async () => {
-  const session = await getAuthServerSession();
+  const session = await getAuthServerSession()
 
   if (!session?.user.id) {
-    return redirect("/api/auth/signin");
+    return redirect('/api/auth/signin')
   }
-
-  const transactions = (await db.transaction.findMany({
-    where: { userId: session.user.id },
-  })) as Transaction[];
 
   // console.log({ transactions });
   return (
@@ -21,7 +15,7 @@ const BalancePage = async () => {
 
       {/* Add your balance-related components and logic here */}
     </div>
-  );
-};
+  )
+}
 
-export default BalancePage;
+export default BalancePage

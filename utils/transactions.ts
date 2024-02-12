@@ -1,4 +1,4 @@
-import { TransactionType } from "@prisma/client";
+import { TransactionType } from '@prisma/client'
 
 export const calculateBalance = (
   currentBalance: number,
@@ -6,8 +6,8 @@ export const calculateBalance = (
   type: TransactionType
 ) => {
   if (type === TransactionType.INCOME) {
-    return currentBalance + amount;
+    return currentBalance + amount
   }
 
-  return currentBalance - amount;
-};
+  return currentBalance - amount
+}

@@ -1,12 +1,12 @@
-import { db } from "@/utils/db";
-import jwt from "jsonwebtoken";
+import { db } from '@/utils/db'
+import jwt from 'jsonwebtoken'
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   // @TODO add validation
   const { email, username, password, firstName, lastName } =
-    await request.json();
+    await request.json()
 
   const createdUser = await db.user.create({
     data: {
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       password,
       username: username ?? email,
     },
-  });
+  })
 
   const token = jwt.sign(
     {
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
         id: createdUser.id,
       },
     },
-    "secret-jwt-here"
-  );
+    'secret-jwt-here'
+  )
 
   return NextResponse.json({
     user: {
@@ -36,5 +36,5 @@ export async function POST(request: Request) {
       lastName,
     },
     token,
-  });
+  })
 }

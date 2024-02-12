@@ -1,3 +1,3 @@
 export const getCurrentLocale = () => {
-  return "en";
-};
+  return 'en'
+}

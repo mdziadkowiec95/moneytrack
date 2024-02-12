@@ -1,6 +1,3 @@
-import { db } from "@/utils/db";
-import Image from "next/image";
-
 export default async function Home() {
   // await db.transaction.create({
   //   data: {
@@ -9,5 +6,5 @@ export default async function Home() {
   //   },
   // });
 
-  return <div>home</div>;
+  return <div>home</div>
 }

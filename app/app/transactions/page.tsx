@@ -1,20 +1,20 @@
-import { getAuthServerSession } from "@/utils/auth";
-import { db } from "@/utils/db";
-import { Transaction, TransactionType } from "@prisma/client";
-import { Avatar, Box, Button, Card, Flex, Grid, Text } from "@radix-ui/themes";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { getAuthServerSession } from '@/utils/auth'
+import { db } from '@/utils/db'
+import { Transaction, TransactionType } from '@prisma/client'
+import { Avatar, Box, Button, Card, Flex, Grid, Text } from '@radix-ui/themes'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 const Transactions = async () => {
-  const session = await getAuthServerSession();
+  const session = await getAuthServerSession()
 
   if (!session?.user.id) {
-    return redirect("/api/auth/signin");
+    return redirect('/api/auth/signin')
   }
 
   const transactions = (await db.transaction.findMany({
     where: { userId: session.user.id },
-  })) as Transaction[];
+  })) as Transaction[]
 
   return (
     <>
@@ -38,7 +38,7 @@ const Transactions = async () => {
                     {transaction.title}
                   </Text>
                   <Text as="p" size="2" color="gray">
-                    {transaction.type === TransactionType.INCOME ? "+" : "-"}{" "}
+                    {transaction.type === TransactionType.INCOME ? '+' : '-'}{' '}
                     {transaction.amount} PLN
                   </Text>
                 </Box>
@@ -48,7 +48,7 @@ const Transactions = async () => {
         ))}
       </Grid>
     </>
-  );
-};
+  )
+}
 
-export default Transactions;
+export default Transactions

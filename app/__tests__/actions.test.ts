@@ -6,42 +6,44 @@ import {
   expect,
   test,
   vi,
-} from "vitest";
+} from 'vitest'
 
-import { db } from "@/utils/db";
+import { db } from '@/utils/db'
 import {
   FinanceSource,
   FinanceSourceType,
   Transaction,
   TransactionType,
   User,
-} from "@prisma/client";
+} from '@prisma/client'
 
-import { getAuthServerSession } from "@/utils/auth";
+import { getAuthServerSession } from '@/utils/auth'
+
 import {
   addNewAccount,
   addNewTransaction,
+  deleteTransaction,
   updateTransaction,
-} from "../actions";
+} from '@/app/actions'
 
-vi.mock("@/utils/auth", () => {
+vi.mock('@/utils/auth', () => {
   return {
     getAuthServerSession: vi.fn(async () => ({
       user: {
         id: 1,
       },
     })),
-  };
-});
+  }
+})
 
-vi.mock("next/navigation", () => {
+vi.mock('next/navigation', () => {
   return {
     redirect: vi.fn(),
-  };
-});
+  }
+})
 
-let financeSource: FinanceSource;
-let user: User;
+let financeSource: FinanceSource
+let user: User
 
 const getFinanceSourceHistories = async () =>
   db.financeSourceHistory.findMany({
@@ -55,136 +57,136 @@ const getFinanceSourceHistories = async () =>
     orderBy: [
       {
         transaction: {
-          date: "asc",
+          date: 'asc',
         },
       },
       {
         transaction: {
-          updatedAt: "asc",
+          updatedAt: 'asc',
         },
       },
       {
         transaction: {
-          createdAt: "asc",
+          createdAt: 'asc',
         },
       },
     ],
-  });
+  })
 
 const getAllTransactions = async () =>
   db.transaction.findMany({
     orderBy: {
-      date: "asc",
+      date: 'asc',
     },
-  });
+  })
 
 const addNewTransactionUsingAction = async (
   data: Partial<
     Transaction & {
-      date: Date;
+      date: Date
     }
   >
 ) => {
-  const formData = new FormData();
+  const formData = new FormData()
 
-  formData.append("id", `${data.id}`);
-  formData.append("title", `${data.title}`);
-  formData.append("amount", `${data.amount}`);
-  formData.append("description", `${data.description}`);
-  formData.append("date", `${data.date?.toISOString()}`);
-  formData.append("type", `${data.type}`);
-  formData.append("financeSourceId", financeSource.id);
+  formData.append('id', `${data.id}`)
+  formData.append('title', `${data.title}`)
+  formData.append('amount', `${data.amount}`)
+  formData.append('description', `${data.description}`)
+  formData.append('date', `${data.date?.toISOString()}`)
+  formData.append('type', `${data.type}`)
+  formData.append('financeSourceId', financeSource.id)
 
-  await addNewTransaction(formData);
-};
+  await addNewTransaction(formData)
+}
 
 const updateTransactionUsingAction = async (data: Partial<Transaction>) => {
-  const formData = new FormData();
+  const formData = new FormData()
 
-  formData.append("id", `${data.id}`);
-  formData.append("title", `${data.title}`);
-  formData.append("amount", `${data.amount}`);
-  formData.append("description", `${data.description}`);
-  formData.append("date", `${data.date?.toISOString()}`);
-  formData.append("type", `${data.type}`);
-  formData.append("financeSourceId", financeSource.id);
+  formData.append('id', `${data.id}`)
+  formData.append('title', `${data.title}`)
+  formData.append('amount', `${data.amount}`)
+  formData.append('description', `${data.description}`)
+  formData.append('date', `${data.date?.toISOString()}`)
+  formData.append('type', `${data.type}`)
+  formData.append('financeSourceId', financeSource.id)
 
-  await updateTransaction(formData);
-};
+  await updateTransaction(formData)
+}
 
 const restoreDB = async () => {
-  const deleteTransactions = db.transaction.deleteMany();
-  const deleteFinanceSources = db.financeSource.deleteMany();
-  const deleteFinanceSourceHistories = db.financeSourceHistory.deleteMany({});
+  const deleteTransactions = db.transaction.deleteMany()
+  const deleteFinanceSources = db.financeSource.deleteMany()
+  const deleteFinanceSourceHistories = db.financeSourceHistory.deleteMany({})
 
-  const deleteUsers = db.user.deleteMany();
+  const deleteUsers = db.user.deleteMany()
 
   await db.$transaction([
     deleteTransactions,
     deleteFinanceSourceHistories,
     deleteFinanceSources,
     deleteUsers,
-  ]);
-};
+  ])
+}
 
 const createAccount = async () => {
-  const accountFormData = new FormData();
+  const accountFormData = new FormData()
 
-  accountFormData.append("name", "Cash");
-  accountFormData.append("financeSourceType", FinanceSourceType.CASH);
+  accountFormData.append('name', 'Cash')
+  accountFormData.append('financeSourceType', FinanceSourceType.CASH)
 
-  await addNewAccount(accountFormData);
+  await addNewAccount(accountFormData)
 
   return await db.financeSource.findFirst({
     where: {
-      name: "Cash",
+      name: 'Cash',
     },
-  });
-};
+  })
+}
 
 beforeEach(async () => {
   user = await db.user.create({
     data: {
-      email: "integration_test_1@mailinator.com",
-      password: "test1234",
-      username: "integration_test_1",
-      firstName: "Integration",
-      lastName: "Test",
+      email: 'integration_test_1@mailinator.com',
+      password: 'test1234',
+      username: 'integration_test_1',
+      firstName: 'Integration',
+      lastName: 'Test',
     },
-  });
+  })
 
   //@ts-expect-error - fix this later
-  getAuthServerSession.mockResolvedValue({ user });
+  getAuthServerSession.mockResolvedValue({ user })
 
-  financeSource = (await createAccount()) as FinanceSource;
-});
+  financeSource = (await createAccount()) as FinanceSource
+})
 
 afterEach(async () => {
-  vi.clearAllMocks();
+  vi.clearAllMocks()
 
-  await restoreDB();
-});
+  await restoreDB()
+})
 
 afterAll(async () => {
-  await db.$disconnect();
-});
+  await db.$disconnect()
+})
 
-describe("addNewTransaction", () => {
-  describe("when adding first transaction", () => {
-    test("should create new transaction properly when no transactions added yet", async () => {
+describe('addNewTransaction', () => {
+  describe('when adding first transaction', () => {
+    test('should create new transaction properly when no transactions added yet', async () => {
       await addNewTransactionUsingAction({
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         amount: 1000,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const transactionsInDB = await db.transaction.findMany({
-        where: { title: "Integration Test 1 INCOME" },
-      });
+        where: { title: 'Integration Test 1 INCOME' },
+      })
 
-      expect(transactionsInDB).toHaveLength(1);
+      expect(transactionsInDB).toHaveLength(1)
 
       expect(transactionsInDB[0]).toEqual({
         id: expect.any(String),
@@ -194,28 +196,28 @@ describe("addNewTransaction", () => {
         date: new Date(2024, 1, 7, 0, 0, 0),
         description: null,
         financeSourceId: financeSource.id,
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         type: TransactionType.INCOME,
         userId: user.id,
-      });
-    });
+      })
+    })
 
-    test("should create related finance source history entry with updated balance", async () => {
+    test('should create related finance source history entry with updated balance', async () => {
       await addNewTransactionUsingAction({
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         amount: 1000,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const transactions = await db.transaction.findMany({
         include: {
           financeSourceHistory: true,
         },
-      });
+      })
 
-      expect(transactions).toHaveLength(1);
+      expect(transactions).toHaveLength(1)
 
       expect(transactions[0].financeSourceHistory).toEqual({
         id: expect.any(String),
@@ -225,434 +227,432 @@ describe("addNewTransaction", () => {
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         userId: user.id,
-      });
-    });
-  });
+      })
+    })
+  })
 
-  describe("when updating balance", () => {
-    test("should update balance history properly when adding new transaction in the future", async () => {
+  describe('when updating balance', () => {
+    test('should update balance history properly when adding new transaction in the future', async () => {
       // Add first transaction
       await addNewTransactionUsingAction({
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         amount: 300,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterFristTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
 
-      expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1);
+      expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1)
       expect(financeSourceHistoriesAfterFristTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 300,
         })
-      );
+      )
 
       // Add second transaction
       await addNewTransactionUsingAction({
-        title: "Integration Test 2 OUTCOME",
+        title: 'Integration Test 2 OUTCOME',
         amount: 50,
         date: new Date(2024, 1, 7, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterSecondTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
       // Verify balance
-      expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2);
+      expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2)
       expect(financeSourceHistoriesAfterSecondTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 300,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterSecondTransaction[1]).toEqual(
         expect.objectContaining({
           balance: 250,
         })
-      );
-    });
+      )
+    })
 
-    test("should update balance history properly when adding new transaction in the past", async () => {
+    test('should update balance history properly when adding new transaction in the past', async () => {
       // Add first transaction
       await addNewTransactionUsingAction({
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         amount: 500,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterFristTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
 
-      expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1);
+      expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1)
       expect(financeSourceHistoriesAfterFristTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 500,
         })
-      );
+      )
 
       await addNewTransactionUsingAction({
-        title: "Integration Test 2 OUTCOME",
+        title: 'Integration Test 2 OUTCOME',
         amount: 150,
         date: new Date(2024, 1, 8, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterSecondTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
 
       // Verify balance
-      expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2);
+      expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2)
 
       expect(financeSourceHistoriesAfterSecondTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 500,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterSecondTransaction[1]).toEqual(
         expect.objectContaining({
           balance: 350,
         })
-      );
+      )
 
       await addNewTransactionUsingAction({
-        title: "Integration Test 3 OUTCOME",
+        title: 'Integration Test 3 OUTCOME',
         amount: 20,
         date: new Date(2024, 1, 3, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterThirdTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
 
       // Verify balance
-      expect(financeSourceHistoriesAfterThirdTransaction).toHaveLength(3);
+      expect(financeSourceHistoriesAfterThirdTransaction).toHaveLength(3)
       expect(financeSourceHistoriesAfterThirdTransaction[0]).toEqual(
         expect.objectContaining({
           balance: -20,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterThirdTransaction[1]).toEqual(
         expect.objectContaining({
           balance: 480,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterThirdTransaction[2]).toEqual(
         expect.objectContaining({
           balance: 330,
         })
-      );
-    });
+      )
+    })
 
-    test("should update balance history properly when adding new transaction in the exactly the same time as existing history record", async () => {
+    test('should update balance history properly when adding new transaction in the exactly the same time as existing history record', async () => {
       await addNewTransactionUsingAction({
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         amount: 500,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterFristTransaction =
-        await getFinanceSourceHistories();
-      expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1);
+        await getFinanceSourceHistories()
+      expect(financeSourceHistoriesAfterFristTransaction).toHaveLength(1)
       expect(financeSourceHistoriesAfterFristTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 500,
         })
-      );
+      )
 
       await addNewTransactionUsingAction({
-        title: "Integration Test 2 OUTCOME",
+        title: 'Integration Test 2 OUTCOME',
         amount: 150,
         date: new Date(2024, 1, 8, 2, 0, 0),
         type: TransactionType.OUTCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterSecondTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
       // Verify balance
-      expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2);
+      expect(financeSourceHistoriesAfterSecondTransaction).toHaveLength(2)
 
       expect(financeSourceHistoriesAfterSecondTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 500,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterSecondTransaction[1]).toEqual(
         expect.objectContaining({
           balance: 350,
         })
-      );
+      )
 
       // Add third transaction with the same date as the first transaction
       await addNewTransactionUsingAction({
-        title: "Integration Test 1 INCOME",
+        title: 'Integration Test 1 INCOME',
         amount: 10,
         date: new Date(2024, 1, 7, 0, 0, 0),
         type: TransactionType.INCOME,
         financeSourceId: financeSource.id,
-      });
+      })
 
       const financeSourceHistoriesAfterThirdTransaction =
-        await getFinanceSourceHistories();
+        await getFinanceSourceHistories()
 
-      expect(financeSourceHistoriesAfterThirdTransaction).toHaveLength(3);
+      expect(financeSourceHistoriesAfterThirdTransaction).toHaveLength(3)
       expect(financeSourceHistoriesAfterThirdTransaction[0]).toEqual(
         expect.objectContaining({
           balance: 500,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterThirdTransaction[1]).toEqual(
         expect.objectContaining({
           balance: 510,
         })
-      );
+      )
       expect(financeSourceHistoriesAfterThirdTransaction[2]).toEqual(
         expect.objectContaining({
           balance: 360,
         })
-      );
-    });
-  });
-});
+      )
+    })
+  })
+})
 
-describe("updateTransaction", () => {
-  test("should update transaction properly", async () => {
+describe('updateTransaction', () => {
+  test('should update transaction properly', async () => {
     await addNewTransactionUsingAction({
-      title: "Integration Test 1 INCOME",
+      title: 'Integration Test 1 INCOME',
       amount: 500,
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
-    const [firstTransaction] = await getAllTransactions();
+    const [firstTransaction] = await getAllTransactions()
 
     await updateTransactionUsingAction({
       id: firstTransaction.id,
-      title: "Integration Test 1 INCOME Updated",
+      title: 'Integration Test 1 INCOME Updated',
       amount: 1000,
-      description: "Example description",
+      description: 'Example description',
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
-    const allTransactions = await getAllTransactions();
+    const allTransactions = await getAllTransactions()
 
-    expect(allTransactions).toHaveLength(1);
+    expect(allTransactions).toHaveLength(1)
     expect(allTransactions[0]).toEqual({
       amount: 1000,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 7, 0, 0, 0),
-      description: "Example description",
+      description: 'Example description',
       financeSourceId: financeSource.id,
       id: firstTransaction.id,
-      title: "Integration Test 1 INCOME Updated",
+      title: 'Integration Test 1 INCOME Updated',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
-  });
+    })
+  })
 
-  test("should update balances properly when updating transaction which is the most recent and date does not change", async () => {
+  test('should update balances properly when updating transaction which is the most recent and date does not change', async () => {
     await addNewTransactionUsingAction({
-      title: "Integration Test 1 INCOME",
+      title: 'Integration Test 1 INCOME',
       amount: 150,
       date: new Date(2024, 1, 6, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Integration Test 2 OUTCOME",
+      title: 'Integration Test 2 OUTCOME',
       amount: 300,
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
-    const initialTransactions = await getAllTransactions();
+    const initialTransactions = await getAllTransactions()
 
-    const [, secondTransaction] = initialTransactions;
+    const [, secondTransaction] = initialTransactions
 
-    expect(initialTransactions).toHaveLength(2);
+    expect(initialTransactions).toHaveLength(2)
 
     await updateTransactionUsingAction({
       id: secondTransaction.id,
-      title: "Integration Test 2 OUTCOME Updated",
+      title: 'Integration Test 2 OUTCOME Updated',
       amount: 700,
-      description: "Example description",
+      description: 'Example description',
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
     const allTransactionsAfterUpdate = await db.transaction.findMany({
       orderBy: {
-        date: "asc",
+        date: 'asc',
       },
-    });
+    })
 
-    const financeSourceHistories = await getFinanceSourceHistories();
+    const financeSourceHistories = await getFinanceSourceHistories()
 
-    expect(allTransactionsAfterUpdate).toHaveLength(2);
+    expect(allTransactionsAfterUpdate).toHaveLength(2)
     expect(allTransactionsAfterUpdate[1]).toEqual({
       amount: 700,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 7, 0, 0, 0),
-      description: "Example description",
+      description: 'Example description',
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[1].id,
-      title: "Integration Test 2 OUTCOME Updated",
+      title: 'Integration Test 2 OUTCOME Updated',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
-    expect(financeSourceHistories).toHaveLength(2);
+    expect(financeSourceHistories).toHaveLength(2)
     expect(financeSourceHistories[0]).toEqual(
       expect.objectContaining({ balance: 150 })
-    );
+    )
     expect(financeSourceHistories[1]).toEqual(
       expect.objectContaining({ balance: -550 })
-    );
-  });
+    )
+  })
 
-  test("should update balances properly when updating transaction which is the most recent and changing date to the past", async () => {
+  test('should update balances properly when updating transaction which is the most recent and changing date to the past', async () => {
     await addNewTransactionUsingAction({
-      title: "Integration Test 1 INCOME",
+      title: 'Integration Test 1 INCOME',
       amount: 150,
       date: new Date(2024, 1, 5, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Integration Test 2 OUTCOME",
+      title: 'Integration Test 2 OUTCOME',
       amount: 400,
       date: new Date(2024, 1, 6, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Integration Test 3 INCOME",
+      title: 'Integration Test 3 INCOME',
       amount: 300,
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
-    const initialTransactions = await getAllTransactions();
+    const initialTransactions = await getAllTransactions()
 
-    const [, , thirdTransaction] = initialTransactions;
+    const [, , thirdTransaction] = initialTransactions
 
-    expect(initialTransactions).toHaveLength(3);
+    expect(initialTransactions).toHaveLength(3)
 
     await updateTransactionUsingAction({
       id: thirdTransaction.id,
-      title: "Integration Test 3 OUTCOME Updated",
+      title: 'Integration Test 3 OUTCOME Updated',
       amount: 700,
-      description: "Example description",
+      description: 'Example description',
       date: new Date(2024, 1, 3, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
-    const allTransactionsAfterUpdate = await getAllTransactions();
+    const allTransactionsAfterUpdate = await getAllTransactions()
 
-    const financeSourceHistories = await getFinanceSourceHistories();
+    const financeSourceHistories = await getFinanceSourceHistories()
 
-    expect(allTransactionsAfterUpdate).toHaveLength(3);
+    expect(allTransactionsAfterUpdate).toHaveLength(3)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 700,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 3, 0, 0, 0),
-      description: "Example description",
+      description: 'Example description',
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[0].id,
-      title: "Integration Test 3 OUTCOME Updated",
+      title: 'Integration Test 3 OUTCOME Updated',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
-    expect(financeSourceHistories).toHaveLength(3);
+    expect(financeSourceHistories).toHaveLength(3)
     expect(financeSourceHistories[0]).toEqual(
       expect.objectContaining({ balance: -700 })
-    );
+    )
     expect(financeSourceHistories[1]).toEqual(
       expect.objectContaining({ balance: -550 })
-    );
+    )
     expect(financeSourceHistories[2]).toEqual(
       expect.objectContaining({ balance: -950 })
-    );
-  });
+    )
+  })
 
-  test("should update balances properly when updating transaction which is the oldest one changing date to the future as last one", async () => {
+  test('should update balances properly when updating transaction which is the oldest one changing date to the future as last one', async () => {
     await addNewTransactionUsingAction({
-      title: "Test 1 OUTCOME",
+      title: 'Test 1 OUTCOME',
       amount: 150,
       date: new Date(2024, 1, 6, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 2 INCOME",
+      title: 'Test 2 INCOME',
       amount: 500,
       date: new Date(2024, 1, 7, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 3 INCOME",
+      title: 'Test 3 INCOME',
       amount: 300,
       date: new Date(2024, 1, 5, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
-    const financeSourceHistoriesBefore = await getFinanceSourceHistories();
+    const initialTransactions = await getAllTransactions()
 
-    const initialTransactions = await getAllTransactions();
+    const [oldestTransaction] = initialTransactions
 
-    const [oldestTransaction] = initialTransactions;
-
-    expect(initialTransactions).toHaveLength(3);
+    expect(initialTransactions).toHaveLength(3)
 
     await updateTransactionUsingAction({
       id: oldestTransaction.id,
-      title: "Test 3 OUTCOME Updated",
+      title: 'Test 3 OUTCOME Updated',
       amount: 350,
-      description: "Example description",
+      description: 'Example description',
       date: new Date(2024, 1, 8, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
-    const allTransactionsAfterUpdate = await getAllTransactions();
-    const financeSourceHistories = await getFinanceSourceHistories();
+    const allTransactionsAfterUpdate = await getAllTransactions()
+    const financeSourceHistories = await getFinanceSourceHistories()
 
-    expect(allTransactionsAfterUpdate).toHaveLength(3);
+    expect(allTransactionsAfterUpdate).toHaveLength(3)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 150,
       createdAt: expect.any(Date),
@@ -660,87 +660,85 @@ describe("updateTransaction", () => {
       description: null,
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[0].id,
-      title: "Test 1 OUTCOME",
+      title: 'Test 1 OUTCOME',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
     expect(allTransactionsAfterUpdate[2]).toEqual({
       amount: 350,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 8, 0, 0, 0),
-      description: "Example description",
+      description: 'Example description',
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[2].id,
-      title: "Test 3 OUTCOME Updated",
+      title: 'Test 3 OUTCOME Updated',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
-    expect(financeSourceHistories).toHaveLength(3);
+    expect(financeSourceHistories).toHaveLength(3)
     expect(financeSourceHistories[0]).toEqual(
       expect.objectContaining({ balance: -150 })
-    );
+    )
     expect(financeSourceHistories[1]).toEqual(
       expect.objectContaining({ balance: 350 })
-    );
+    )
     expect(financeSourceHistories[2]).toEqual(
       expect.objectContaining({ balance: 0 })
-    );
-  });
+    )
+  })
 
-  test("should update balances properly when updating transaction which is the oldest changing date to the future but middle", async () => {
+  test('should update balances properly when updating transaction which is the oldest changing date to the future but middle', async () => {
     await addNewTransactionUsingAction({
-      title: "Test 1 OUTCOME",
+      title: 'Test 1 OUTCOME',
       amount: 800,
       date: new Date(2024, 1, 6, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 2 INCOME",
+      title: 'Test 2 INCOME',
       amount: 200,
       date: new Date(2024, 1, 9, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 3 INCOME",
+      title: 'Test 3 INCOME',
       amount: 500,
       date: new Date(2024, 1, 13, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
-    const financeSourceHistoriesBefore = await getFinanceSourceHistories();
+    const initialTransactions = await getAllTransactions()
 
-    const initialTransactions = await getAllTransactions();
+    const [firstTransaction] = initialTransactions
 
-    const [firstTransaction] = initialTransactions;
-
-    expect(initialTransactions).toHaveLength(3);
+    expect(initialTransactions).toHaveLength(3)
 
     await updateTransactionUsingAction({
       id: firstTransaction.id,
-      title: "Test 1 OUTCOME Updated",
+      title: 'Test 1 OUTCOME Updated',
       amount: 400,
-      description: "Example description",
+      description: 'Example description',
       date: new Date(2024, 1, 11, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
-    const allTransactionsAfterUpdate = await getAllTransactions();
-    const financeSourceHistories = await getFinanceSourceHistories();
+    const allTransactionsAfterUpdate = await getAllTransactions()
+    const financeSourceHistories = await getFinanceSourceHistories()
 
-    expect(allTransactionsAfterUpdate).toHaveLength(3);
+    expect(allTransactionsAfterUpdate).toHaveLength(3)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 200,
       createdAt: expect.any(Date),
@@ -748,11 +746,11 @@ describe("updateTransaction", () => {
       description: null,
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[0].id,
-      title: "Test 2 INCOME",
+      title: 'Test 2 INCOME',
       type: TransactionType.INCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
     expect(allTransactionsAfterUpdate[2]).toEqual({
       amount: 500,
@@ -761,85 +759,83 @@ describe("updateTransaction", () => {
       description: null,
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[2].id,
-      title: "Test 3 INCOME",
+      title: 'Test 3 INCOME',
       type: TransactionType.INCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
-    expect(financeSourceHistories).toHaveLength(3);
+    expect(financeSourceHistories).toHaveLength(3)
     expect(financeSourceHistories[0]).toEqual(
       expect.objectContaining({ balance: 200 })
-    );
+    )
     expect(financeSourceHistories[1]).toEqual(
       expect.objectContaining({ balance: -200 })
-    );
+    )
     expect(financeSourceHistories[2]).toEqual(
       expect.objectContaining({ balance: 300 })
-    );
+    )
 
     // -800 -> -600 -> -100
     // 200 -> -200 -> 300
-  });
-  test("should update balances properly when updating transaction which is in the middle recent and changing date to the same date as many others in the future", async () => {
+  })
+  test('should update balances properly when updating transaction which is in the middle recent and changing date to the same date as many others in the future', async () => {
     await addNewTransactionUsingAction({
-      title: "Test 1 OUTCOME",
+      title: 'Test 1 OUTCOME',
       amount: 100,
       date: new Date(2024, 1, 6, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 2 INCOME",
+      title: 'Test 2 INCOME',
       amount: 300,
       date: new Date(2024, 1, 8, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 3 INCOME",
+      title: 'Test 3 INCOME',
       amount: 200,
       date: new Date(2024, 1, 9, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
     await addNewTransactionUsingAction({
-      title: "Test 4 INCOME",
+      title: 'Test 4 INCOME',
       amount: 500,
       date: new Date(2024, 1, 13, 0, 0, 0),
       type: TransactionType.INCOME,
       financeSourceId: financeSource.id,
       userId: user.id,
-    });
+    })
 
-    const financeSourceHistoriesBefore = await getFinanceSourceHistories();
+    const initialTransactions = await getAllTransactions()
 
-    const initialTransactions = await getAllTransactions();
+    const [, secondTransaction] = initialTransactions
 
-    const [, secondTransaction] = initialTransactions;
-
-    expect(initialTransactions).toHaveLength(4);
+    expect(initialTransactions).toHaveLength(4)
 
     await updateTransactionUsingAction({
       id: secondTransaction.id,
-      title: "Test 2 INCOME Updated",
+      title: 'Test 2 INCOME Updated',
       amount: 400,
-      description: "Example description",
+      description: 'Example description',
       date: new Date(2024, 1, 9, 0, 0, 0),
       type: TransactionType.OUTCOME,
       financeSourceId: financeSource.id,
-    });
+    })
 
-    const allTransactionsAfterUpdate = await getAllTransactions();
-    const financeSourceHistories = await getFinanceSourceHistories();
+    const allTransactionsAfterUpdate = await getAllTransactions()
+    const financeSourceHistories = await getFinanceSourceHistories()
 
-    expect(allTransactionsAfterUpdate).toHaveLength(4);
+    expect(allTransactionsAfterUpdate).toHaveLength(4)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 100,
       createdAt: expect.any(Date),
@@ -847,37 +843,318 @@ describe("updateTransaction", () => {
       description: null,
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[0].id,
-      title: "Test 1 OUTCOME",
+      title: 'Test 1 OUTCOME',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
     expect(allTransactionsAfterUpdate[2]).toEqual({
       amount: 400,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 9, 0, 0, 0),
-      description: "Example description",
+      description: 'Example description',
       financeSourceId: financeSource.id,
       id: allTransactionsAfterUpdate[2].id,
-      title: "Test 2 INCOME Updated",
+      title: 'Test 2 INCOME Updated',
       type: TransactionType.OUTCOME,
       updatedAt: expect.any(Date),
       userId: user.id,
-    });
+    })
 
-    expect(financeSourceHistories).toHaveLength(4);
+    expect(financeSourceHistories).toHaveLength(4)
     expect(financeSourceHistories[0]).toEqual(
       expect.objectContaining({ balance: -100 })
-    );
+    )
     expect(financeSourceHistories[1]).toEqual(
       expect.objectContaining({ balance: 100 })
-    );
+    )
     expect(financeSourceHistories[2]).toEqual(
       expect.objectContaining({ balance: -300 })
-    );
+    )
     expect(financeSourceHistories[3]).toEqual(
       expect.objectContaining({ balance: 200 })
-    );
-  });
-});
+    )
+  })
+})
+
+describe('deleteTransaction', () => {
+  describe('when deleting the only transaction', () => {
+    test('should delete transaction properly', async () => {
+      await addNewTransactionUsingAction({
+        title: 'Test 1 INCOME',
+        amount: 300,
+        date: new Date(2024, 1, 8, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      const transactions = await getAllTransactions()
+      const [firstTransaction] = transactions
+
+      expect(transactions).toHaveLength(1)
+
+      expect(firstTransaction).toEqual({
+        id: expect.any(String),
+        type: TransactionType.INCOME,
+        title: 'Test 1 INCOME',
+        amount: 300,
+        description: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        date: new Date(2024, 1, 8, 0, 0, 0),
+        userId: user.id,
+        financeSourceId: financeSource.id,
+      })
+
+      await deleteTransaction(firstTransaction.id)
+
+      const transactionsAfterDeletion = await getAllTransactions()
+
+      expect(transactionsAfterDeletion).toHaveLength(0)
+    })
+  })
+
+  describe('when multiple transaction available', () => {
+    test('should remove the oldest transaction and update balances properly', async () => {
+      await addNewTransactionUsingAction({
+        title: 'Test 1 INCOME',
+        amount: 300,
+        date: new Date(2024, 1, 6, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 2 INCOME',
+        amount: 400,
+        date: new Date(2024, 1, 8, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 3 OUTCOME',
+        amount: 500,
+        date: new Date(2024, 1, 9, 0, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      const transactionsInitially = await getAllTransactions()
+      const balancesInitially = await getFinanceSourceHistories()
+
+      expect(transactionsInitially).toHaveLength(3)
+      expect(balancesInitially).toHaveLength(3)
+
+      expect(balancesInitially[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesInitially[1]).toEqual(
+        expect.objectContaining({ balance: 700 })
+      )
+      expect(balancesInitially[2]).toEqual(
+        expect.objectContaining({ balance: 200 })
+      )
+
+      await deleteTransaction(transactionsInitially[0].id)
+
+      const transactionsAfterDeletion = await getAllTransactions()
+      const balancesAfterDeletion = await getFinanceSourceHistories()
+
+      expect(transactionsAfterDeletion).toHaveLength(2)
+      expect(balancesAfterDeletion).toHaveLength(2)
+
+      expect(balancesAfterDeletion[0]).toEqual(
+        expect.objectContaining({ balance: 400 })
+      )
+      expect(balancesAfterDeletion[1]).toEqual(
+        expect.objectContaining({ balance: -100 })
+      )
+    })
+
+    test('should remove the transaction in the middle and update balances properly', async () => {
+      await addNewTransactionUsingAction({
+        title: 'Test 1 INCOME',
+        amount: 300,
+        date: new Date(2024, 1, 6, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 2 INCOME',
+        amount: 400,
+        date: new Date(2024, 1, 8, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 3 OUTCOME',
+        amount: 500,
+        date: new Date(2024, 1, 9, 0, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      const transactionsInitially = await getAllTransactions()
+      const balancesInitially = await getFinanceSourceHistories()
+
+      expect(transactionsInitially).toHaveLength(3)
+      expect(balancesInitially).toHaveLength(3)
+
+      expect(balancesInitially[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesInitially[1]).toEqual(
+        expect.objectContaining({ balance: 700 })
+      )
+      expect(balancesInitially[2]).toEqual(
+        expect.objectContaining({ balance: 200 })
+      )
+
+      await deleteTransaction(transactionsInitially[1].id)
+
+      const transactionsAfterDeletion = await getAllTransactions()
+      const balancesAfterDeletion = await getFinanceSourceHistories()
+
+      expect(transactionsAfterDeletion).toHaveLength(2)
+      expect(balancesAfterDeletion).toHaveLength(2)
+
+      expect(balancesAfterDeletion[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesAfterDeletion[1]).toEqual(
+        expect.objectContaining({ balance: -200 })
+      )
+    })
+
+    test('should remove the newest transaction and just remove corresponding balance', async () => {
+      await addNewTransactionUsingAction({
+        title: 'Test 1 INCOME',
+        amount: 300,
+        date: new Date(2024, 1, 6, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 2 INCOME',
+        amount: 400,
+        date: new Date(2024, 1, 8, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 3 OUTCOME',
+        amount: 500,
+        date: new Date(2024, 1, 9, 0, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      const transactionsInitially = await getAllTransactions()
+      const balancesInitially = await getFinanceSourceHistories()
+
+      expect(transactionsInitially).toHaveLength(3)
+      expect(balancesInitially).toHaveLength(3)
+
+      expect(balancesInitially[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesInitially[1]).toEqual(
+        expect.objectContaining({ balance: 700 })
+      )
+      expect(balancesInitially[2]).toEqual(
+        expect.objectContaining({ balance: 200 })
+      )
+
+      await deleteTransaction(transactionsInitially[2].id)
+
+      const transactionsAfterDeletion = await getAllTransactions()
+      const balancesAfterDeletion = await getFinanceSourceHistories()
+
+      expect(transactionsAfterDeletion).toHaveLength(2)
+      expect(balancesAfterDeletion).toHaveLength(2)
+
+      expect(balancesAfterDeletion[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesAfterDeletion[1]).toEqual(
+        expect.objectContaining({ balance: 700 })
+      )
+    })
+
+    test('should remove transaction with exactly the same date as many others and update balances properly', async () => {
+      await addNewTransactionUsingAction({
+        title: 'Test 1 INCOME',
+        amount: 300,
+        date: new Date(2024, 1, 6, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 2 INCOME',
+        amount: 400,
+        date: new Date(2024, 1, 6, 0, 0, 0),
+        type: TransactionType.INCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      await addNewTransactionUsingAction({
+        title: 'Test 3 OUTCOME',
+        amount: 500,
+        date: new Date(2024, 1, 6, 0, 0, 0),
+        type: TransactionType.OUTCOME,
+        financeSourceId: financeSource.id,
+        userId: user.id,
+      })
+
+      const transactionsInitially = await getAllTransactions()
+      const balancesInitially = await getFinanceSourceHistories()
+
+      expect(transactionsInitially).toHaveLength(3)
+      expect(balancesInitially).toHaveLength(3)
+
+      expect(balancesInitially[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesInitially[1]).toEqual(
+        expect.objectContaining({ balance: 700 })
+      )
+      expect(balancesInitially[2]).toEqual(
+        expect.objectContaining({ balance: 200 })
+      )
+
+      await deleteTransaction(transactionsInitially[1].id)
+
+      const transactionsAfterDeletion = await getAllTransactions()
+      const balancesAfterDeletion = await getFinanceSourceHistories()
+
+      expect(transactionsAfterDeletion).toHaveLength(2)
+      expect(balancesAfterDeletion).toHaveLength(2)
+
+      expect(balancesAfterDeletion[0]).toEqual(
+        expect.objectContaining({ balance: 300 })
+      )
+      expect(balancesAfterDeletion[1]).toEqual(
+        expect.objectContaining({ balance: -200 })
+      )
+    })
+  })
+})

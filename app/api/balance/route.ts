@@ -1,23 +1,17 @@
-import { db } from "@/utils/db";
-import { NextResponse } from "next/server";
-import { getAuthServerSession } from "@/utils/auth";
-import {
-  FinanceSource,
-  FinanceSourceHistory,
-  Transaction,
-  TransactionType,
-} from "@prisma/client";
+import { db } from '@/utils/db'
+import { NextResponse } from 'next/server'
+import { getAuthServerSession } from '@/utils/auth'
 
-export async function GET(request: Request) {
-  const session = await getAuthServerSession();
+export async function GET() {
+  const session = await getAuthServerSession()
 
   if (!session?.user?.id) {
     return NextResponse.json(
       {
-        error: "User not authenticated",
+        error: 'User not authenticated',
       },
       { status: 401 }
-    );
+    )
   }
 
   // TODO - Get the date range from the request. For now, we'll hardcode it
@@ -28,8 +22,8 @@ export async function GET(request: Request) {
     where: {
       transaction: {
         date: {
-          gte: new Date("2024-01-31"),
-          lt: new Date("2024-05-01"),
+          gte: new Date('2024-01-31'),
+          lt: new Date('2024-05-01'),
         },
       },
     },
@@ -37,28 +31,28 @@ export async function GET(request: Request) {
     orderBy: [
       {
         transaction: {
-          date: "asc",
+          date: 'asc',
         },
       },
       {
         transaction: {
-          updatedAt: "desc",
+          updatedAt: 'desc',
         },
       },
     ],
     include: {
       transaction: true,
     },
-  });
+  })
 
-  let precedingBalance = null;
+  let precedingBalance = null
 
   if (
     !balances.find((balance) => {
       return (
         balance?.transaction &&
         new Date(balance.transaction.date).getDate() === 1
-      );
+      )
     })
   ) {
     // Get the most recent transaction before "2024-02-01" date
@@ -66,26 +60,26 @@ export async function GET(request: Request) {
     const mostRecentTransactionData = await db.transaction.findMany({
       where: {
         date: {
-          lt: new Date("2024-02-01"),
+          lt: new Date('2024-02-01'),
         },
         userId: session.user.id,
       },
       orderBy: {
-        date: "desc",
+        date: 'desc',
       },
       take: 1,
-    });
+    })
 
-    const [mostRecentTransaction] = mostRecentTransactionData;
+    const [mostRecentTransaction] = mostRecentTransactionData
 
     if (mostRecentTransaction) {
       const mostRecentBalance = await db.financeSourceHistory.findFirst({
         where: {
           transactionId: mostRecentTransaction.id,
         },
-      });
+      })
 
-      precedingBalance = mostRecentBalance;
+      precedingBalance = mostRecentBalance
     }
   }
 
@@ -93,5 +87,5 @@ export async function GET(request: Request) {
     totalBalance: balances[balances.length - 1]?.balance ?? 0,
     balances,
     precedingBalance,
-  });
+  })
 }

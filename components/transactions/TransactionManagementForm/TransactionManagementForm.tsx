@@ -1,61 +1,41 @@
-"use client";
+'use client'
 
-import { use, useEffect, useRef, useState } from "react";
-import * as Form from "@radix-ui/react-form";
-import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
-import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { Button, Heading, Select, TextField } from "@radix-ui/themes";
+import { useEffect, useRef, useState } from 'react'
+import * as Form from '@radix-ui/react-form'
+import { MinusCircledIcon, PlusCircledIcon } from '@radix-ui/react-icons'
+import * as ToggleGroup from '@radix-ui/react-toggle-group'
+import { Button, Heading, Select, TextField } from '@radix-ui/themes'
 
-import Datepicker, { DateValueType } from "react-tailwindcss-datepicker";
-import { addNewTransaction, updateTransaction } from "@/app/actions";
-import {
-  FinanceSource,
-  FinanceSourceType,
-  TransactionType,
-} from "@prisma/client";
-import { db } from "@/utils/db";
-import { useSession } from "next-auth/react";
-
-const ACCOUNTS = [
-  {
-    name: "Cash",
-    value: FinanceSourceType.CASH,
-  },
-  {
-    name: "Bank",
-    value: FinanceSourceType.BANK_ACCOUNT,
-  },
-  {
-    name: "Investment",
-    value: FinanceSourceType.INVESTMENT,
-  },
-];
+import Datepicker, { DateValueType } from 'react-tailwindcss-datepicker'
+import { addNewTransaction, updateTransaction } from '@/app/actions'
+import { FinanceSource, TransactionType } from '@prisma/client'
+import { useSession } from 'next-auth/react'
 
 type TransationManagementFormState = {
-  type: TransactionType;
-  date: DateValueType;
-  amount?: number;
-  title: string;
-  financeSourceId?: string;
-};
+  type: TransactionType
+  date: DateValueType
+  amount?: number
+  title: string
+  financeSourceId?: string
+}
 
 type InitialData = TransationManagementFormState & {
-  id: string;
-  date: Date;
-  financeSourceId: string;
-};
+  id: string
+  date: Date
+  financeSourceId: string
+}
 
-const isIncome = (type: TransactionType) => type === TransactionType.INCOME;
+const isIncome = (type: TransactionType) => type === TransactionType.INCOME
 
 const toggleGroupItemClasses =
-  "hover:bg-black-200 color-mauve11 flex h-[35px] px-3 items-center justify-center data-[state=on]:bg-white data-[state=on]:text-black text-base leading-4 first:rounded-l last:rounded-r focus:z-10 ";
+  'hover:bg-black-200 color-mauve11 flex h-[35px] px-3 items-center justify-center data-[state=on]:bg-white data-[state=on]:text-black text-base leading-4 first:rounded-l last:rounded-r focus:z-10 '
 
 const TransactionManagementForm = ({
   initialData,
 }: {
-  initialData?: InitialData;
+  initialData?: InitialData
 }) => {
-  const session = useSession();
+  const session = useSession()
   const [formState, updateFormState] = useState<TransationManagementFormState>(
     () => {
       const initialState: TransationManagementFormState = {
@@ -65,130 +45,130 @@ const TransactionManagementForm = ({
           endDate: new Date(new Date()),
         },
         amount: undefined,
-        title: "",
+        title: '',
         financeSourceId: undefined,
-      };
+      }
 
       if (initialData) {
-        initialState.type = initialData.type;
+        initialState.type = initialData.type
 
         if (initialData.date) {
           initialState.date = {
             startDate: new Date(initialData.date),
             endDate: new Date(initialData.date),
-          };
+          }
         }
 
-        initialState.amount = initialData.amount;
-        initialState.title = initialData.title;
+        initialState.amount = initialData.amount
+        initialState.title = initialData.title
 
-        console.log("initialData.accountId", initialData.financeSourceId);
+        console.log('initialData.accountId', initialData.financeSourceId)
 
-        initialState.financeSourceId = initialData.financeSourceId;
+        initialState.financeSourceId = initialData.financeSourceId
       }
 
-      return initialState;
+      return initialState
     }
-  );
+  )
 
-  const [accounts, setAccounts] = useState<FinanceSource[]>();
-  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accounts, setAccounts] = useState<FinanceSource[]>()
+  const [accountsLoading, setAccountsLoading] = useState(false)
 
   useEffect(() => {
-    if (session.status !== "authenticated") return;
+    if (session.status !== 'authenticated') return
 
     const fetchAccounts = async () => {
-      setAccountsLoading(true);
+      setAccountsLoading(true)
 
-      const response = await fetch("http://localhost:3000/api/financeSource");
-      const accountsData = await response.json();
+      const response = await fetch('http://localhost:3000/api/financeSource')
+      const accountsData = await response.json()
 
-      console.log("accounts", accounts);
-      setAccounts(accountsData.accounts);
+      console.log('accounts', accounts)
+      setAccounts(accountsData.accounts)
 
-      console.log(" accounts.accounts[0].id", accountsData.accounts[0].id);
+      console.log(' accounts.accounts[0].id', accountsData.accounts[0].id)
 
       updateFormState((state) => ({
         ...state,
         financeSourceId: accountsData.accounts[0].id,
-      }));
+      }))
 
-      setAccountsLoading(false);
-    };
+      setAccountsLoading(false)
+    }
 
     if (!accounts && !accountsLoading) {
-      fetchAccounts();
+      fetchAccounts()
     }
-  }, [session, accounts, accountsLoading]);
+  }, [session, accounts, accountsLoading])
 
-  const prevAmount = useRef(formState.amount || 0);
+  const prevAmount = useRef(formState.amount || 0)
 
   const onDateChange = (newDate: DateValueType) => {
-    console.log("onDateChang");
+    console.log('onDateChang')
     updateFormState((state) => ({
       ...state,
       date: newDate,
-    }));
-  };
+    }))
+  }
 
   const onAccountChange = (selectedAccountId: string) => {
-    if (!selectedAccountId) return;
+    if (!selectedAccountId) return
 
     updateFormState((state) => ({
       ...state,
       financeSourceId: selectedAccountId,
-    }));
-  };
+    }))
+  }
 
   const onSimpleFieldChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     updateFormState((state) => ({
       ...state,
       [event.target.name]: event.target.value,
-    }));
-  };
+    }))
+  }
 
   const onAmountFieldChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
+    const value = event.target.value
 
-    let newValue = Number(value);
+    let newValue = Number(value)
 
     if (isNaN(Number(value)) || !Number.isSafeInteger(Number(value))) {
-      newValue = prevAmount.current;
+      newValue = prevAmount.current
     }
 
     if (newValue && newValue < 0) {
-      newValue = 0;
+      newValue = 0
     }
 
-    prevAmount.current = newValue;
+    prevAmount.current = newValue
 
     updateFormState((state) => ({
       ...state,
       [event.target.name]: newValue,
-    }));
-  };
+    }))
+  }
 
   const onSubmit = (formData: FormData) => {
     const transactionDate = formState.date?.startDate
       ? new Date(formState.date.startDate)
-      : new Date();
+      : new Date()
 
-    formData.set("date", transactionDate.toISOString());
-    formData.set("type", formState.type);
+    formData.set('date', transactionDate.toISOString())
+    formData.set('type', formState.type)
 
     if (!initialData) {
-      addNewTransaction(formData);
+      addNewTransaction(formData)
     } else {
-      formData.set("id", initialData.id);
+      formData.set('id', initialData.id)
 
-      updateTransaction(formData);
+      updateTransaction(formData)
     }
-  };
+  }
 
   return (
     <div>
       <Heading size="4">
-        Add new {isIncome(formState.type) ? "Income" : "Outcome"}
+        Add new {isIncome(formState.type) ? 'Income' : 'Outcome'}
       </Heading>
       <Form.Root className="w-[260px]" action={onSubmit}>
         <ToggleGroup.Root
@@ -201,7 +181,7 @@ const TransactionManagementForm = ({
               updateFormState({
                 ...formState,
                 type: selectedType,
-              });
+              })
             }
           }}
           value={formState.type}
@@ -315,7 +295,7 @@ const TransactionManagementForm = ({
         </Form.Submit>
       </Form.Root>
     </div>
-  );
-};
+  )
+}
 
-export default TransactionManagementForm;
+export default TransactionManagementForm

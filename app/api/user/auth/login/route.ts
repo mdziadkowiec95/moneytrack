@@ -1,16 +1,16 @@
-import { db } from "@/utils/db";
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { db } from '@/utils/db'
+import { NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 
 export async function POST(request: Request) {
-  const { email, password } = await request.json();
+  const { email, password } = await request.json()
 
   const user = await db.user.findFirst({
     where: {
       email,
       password,
     },
-  });
+  })
 
   if (!user) {
     return NextResponse.json(
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       {
         status: 404,
       }
-    );
+    )
   }
 
   const token = jwt.sign(
@@ -29,10 +29,10 @@ export async function POST(request: Request) {
         id: user.id,
       },
     },
-    "secret-jwt-here"
-  );
+    'secret-jwt-here'
+  )
 
-  console.log(" POST login");
+  console.log(' POST login')
 
   //   "user": {
   //     "id": 1,
@@ -46,5 +46,5 @@ export async function POST(request: Request) {
   return NextResponse.json({
     user,
     token,
-  });
+  })
 }

@@ -1,6 +1,6 @@
-import TransactionManagementForm from "@/components/transactions/TransactionManagementForm/TransactionManagementForm";
-import { Button, Grid } from "@radix-ui/themes";
-import Link from "next/link";
+import TransactionManagementForm from '@/components/transactions/TransactionManagementForm/TransactionManagementForm'
+import { Button, Grid } from '@radix-ui/themes'
+import Link from 'next/link'
 
 const AddNew = () => {
   return (
@@ -13,7 +13,7 @@ const AddNew = () => {
         <TransactionManagementForm />
       </Grid>
     </>
-  );
-};
+  )
+}
 
-export default AddNew;
+export default AddNew
