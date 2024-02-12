@@ -6,9 +6,9 @@ import Link from 'next/link'
 
 const EditTransaction = async ({ params }: { params: { id: string } }) => {
   // @TODO Validate user
-  const transaction: Transaction = await db.transaction.findUnique({
+  const transaction = (await db.transaction.findUnique({
     where: { id: params.id },
-  })
+  })) as Transaction
 
   console.log(transaction)
 
@@ -18,6 +18,7 @@ const EditTransaction = async ({ params }: { params: { id: string } }) => {
         <Link href="/app/transactions">Cancel</Link>
       </Button>
       <Grid className="py-6">
+        {/* @ts-expect-error */}
         <TransactionManagementForm initialData={transaction} />
       </Grid>
     </>
