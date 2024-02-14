@@ -20,6 +20,7 @@ export async function GET() {
   // Get only the last transaction for each date in the range
   const balances = await db.financeSourceHistory.findMany({
     where: {
+      userId: session.user.id,
       transaction: {
         date: {
           gte: new Date('2024-01-31'),

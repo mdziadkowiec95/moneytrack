@@ -1,3 +1,4 @@
+import { DeleteTransactionButton } from '@/components/transactions/DeleteTransactionButton/DeleteTransactionButton'
 import { getAuthServerSession } from '@/utils/auth'
 import { db } from '@/utils/db'
 import { Transaction, TransactionType } from '@prisma/client'
@@ -33,14 +34,24 @@ const Transactions = async () => {
             <Link href={`/app/transactions/edit/${transaction.id}`}>
               <Flex gap="3" align="center">
                 <Avatar size="3" radius="full" fallback="T" />
-                <Box>
-                  <Text as="p" size="2" weight="bold">
-                    {transaction.title}
-                  </Text>
-                  <Text as="p" size="2" color="gray">
-                    {transaction.type === TransactionType.INCOME ? '+' : '-'}{' '}
-                    {transaction.amount} PLN
-                  </Text>
+                <Box asChild>
+                  <Flex justify="between">
+                    <div>
+                      <Text as="p" size="2" weight="bold">
+                        {transaction.title}
+                      </Text>
+                      <Text as="p" size="2" color="gray">
+                        {transaction.type === TransactionType.INCOME
+                          ? '+'
+                          : '-'}{' '}
+                        {transaction.amount} PLN
+                      </Text>
+                      <Text as="p" size="2" color="gray">
+                        {transaction.date.toLocaleString()}{' '}
+                      </Text>
+                    </div>
+                    <DeleteTransactionButton id={transaction.id} />
+                  </Flex>
                 </Box>
               </Flex>
             </Link>

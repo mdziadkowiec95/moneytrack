@@ -6,6 +6,7 @@ import { FinanceSourceType, TransactionType } from '@prisma/client'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { addMilliseconds } from 'date-fns'
+import { revalidateTag } from 'next/cache'
 
 const baseTransactionSchema = z.object({
   title: z.string(),
@@ -376,13 +377,13 @@ export async function updateTransaction(formData: FormData) {
           },
         })
 
-      const result = await db.$transaction([
+      await db.$transaction([
         revertPreviousTransactionFromBlances,
         updateFutureBalancesAfterTheUpdatedTransactionDate,
         updateExisitingTransactionQuery,
       ])
 
-      return result
+      redirect(`/app/transactions`)
     }
 
     // SCENARIO 3 - moving to the past
@@ -613,7 +614,7 @@ export async function deleteTransaction(transactionId: string) {
     deleteTransactionQuery,
     revertPreviousTransactionFromBlances,
   ])
-
+  revalidateTag('/app/transactions')
   redirect(`/app/transactions`)
 }
 
@@ -640,4 +641,25 @@ export async function addNewAccount(formData: FormData) {
   })
 
   redirect('/app/accounts')
+}
+
+export async function registerUser(formData: FormData) {
+  const user = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+    firstName: formData.get('firstName') as string,
+    lastName: formData.get('lastName') as string,
+  }
+
+  await db.user.create({
+    data: {
+      email: user.email,
+      password: user.password,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.email,
+    },
+  })
+
+  redirect('/api/auth/signin')
 }

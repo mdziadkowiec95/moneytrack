@@ -11,9 +11,16 @@ import { addNewTransaction, updateTransaction } from '@/app/actions'
 import { FinanceSource, TransactionType } from '@prisma/client'
 import { useSession } from 'next-auth/react'
 
+type TimeValueType = {
+  hours: number
+  minutes: number
+  seconds: number
+}
+
 type TransationManagementFormState = {
   type: TransactionType
   date: DateValueType
+  time: TimeValueType
   amount?: number
   title: string
   financeSourceId?: string
@@ -38,11 +45,21 @@ const TransactionManagementForm = ({
   const session = useSession()
   const [formState, updateFormState] = useState<TransationManagementFormState>(
     () => {
+      const currentDate = new Date()
+      const hours = currentDate.getHours()
+      const minutes = currentDate.getMinutes()
+      const seconds = currentDate.getSeconds()
+
       const initialState: TransationManagementFormState = {
         type: TransactionType.INCOME,
         date: {
           startDate: new Date(new Date()),
           endDate: new Date(new Date()),
+        },
+        time: {
+          hours,
+          minutes,
+          seconds,
         },
         amount: undefined,
         title: '',
@@ -56,6 +73,14 @@ const TransactionManagementForm = ({
           initialState.date = {
             startDate: new Date(initialData.date),
             endDate: new Date(initialData.date),
+          }
+        }
+
+        if (initialData.time) {
+          initialState.time = {
+            hours: initialData.time.hours,
+            minutes: initialData.time.minutes,
+            seconds: initialData.time.seconds,
           }
         }
 
@@ -104,10 +129,22 @@ const TransactionManagementForm = ({
   const prevAmount = useRef(formState.amount || 0)
 
   const onDateChange = (newDate: DateValueType) => {
-    console.log('onDateChang')
     updateFormState((state) => ({
       ...state,
       date: newDate,
+    }))
+  }
+
+  const onTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const [hours, minutes] = event.target.value.split(':')
+
+    updateFormState((state) => ({
+      ...state,
+      time: {
+        hours: Number(hours),
+        minutes: Number(minutes),
+        seconds: 0,
+      },
     }))
   }
 
@@ -148,10 +185,33 @@ const TransactionManagementForm = ({
     }))
   }
 
+  const getValueForTimeInput = (time: TimeValueType) => {
+    const formattedHours = time.hours.toString().padStart(2, '0')
+    const formattedMinutes = time.minutes.toString().padStart(2, '0')
+    const formattedSeconds = time.seconds.toString().padStart(2, '0')
+
+    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`
+  }
+
   const onSubmit = (formData: FormData) => {
+    const currentDate = new Date()
+    let hours = currentDate.getHours()
+    let minutes = currentDate.getMinutes()
+    let seconds = currentDate.getSeconds()
+
+    if (formState.time) {
+      hours = formState.time.hours
+      minutes = formState.time.minutes
+      seconds = formState.time.seconds
+    }
+
     const transactionDate = formState.date?.startDate
       ? new Date(formState.date.startDate)
       : new Date()
+
+    transactionDate.setHours(hours)
+    transactionDate.setMinutes(minutes)
+    transactionDate.setSeconds(seconds)
 
     formData.set('date', transactionDate.toISOString())
     formData.set('type', formState.type)
@@ -288,6 +348,19 @@ const TransactionManagementForm = ({
               onChange={onDateChange}
             />
           )}
+        </Form.Field>
+
+        <Form.Field name="time">
+          <Form.Control asChild>
+            <TextField.Input
+              onChange={onTimeChange}
+              value={getValueForTimeInput(formState.time)}
+              type="time"
+              step={2}
+              // min="09:00"
+              // max="18:00"
+            />
+          </Form.Control>
         </Form.Field>
 
         <Form.Submit asChild>

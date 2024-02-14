@@ -42,6 +42,12 @@ vi.mock('next/navigation', () => {
   }
 })
 
+vi.mock('next/cache', () => {
+  return {
+    revalidateTag: vi.fn(),
+  }
+})
+
 let financeSource: FinanceSource
 let user: User
 
