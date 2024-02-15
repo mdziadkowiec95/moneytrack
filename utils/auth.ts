@@ -11,6 +11,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { db } from './db'
 import { JWT } from 'next-auth/jwt'
 import { User } from '@prisma/client'
+import { apiService } from '@/app/services/apiService'
 
 export const authOptions: NextAuthOptions = {
   // TODO -> Workaround DB persistance for credential provider auth -> https://nneko.branche.online/next-auth-credentials-provider-with-the-database-session-strategy/
@@ -29,22 +30,7 @@ export const authOptions: NextAuthOptions = {
           try {
             const { email, password } = credentials
 
-            const res = await fetch(
-              'http://localhost:3000/api/user/auth/login',
-              {
-                method: 'post',
-                body: JSON.stringify({
-                  email,
-                  password,
-                }),
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-              }
-            )
-            // console.log("res", await res.text());
-            const data = await res.json()
-            // console.log("data", data);
+            const data = await apiService.USER.authenticate(email, password)
 
             if (typeof data !== 'undefined') {
               console.log('in !!!')

@@ -17,6 +17,7 @@ import {
 import { Line } from 'react-chartjs-2'
 import { getDaysInMonth, getMonthNames } from '@/utils/date'
 import { FinanceSourceHistory, Transaction } from '@prisma/client'
+import { apiService } from '@/app/services/apiService'
 
 ChartJS.register(
   CategoryScale,
@@ -90,11 +91,7 @@ const BalanceChart = () => {
 
   useEffect(() => {
     const fetchBalanceData = async () => {
-      // const balanceResponse = await fetch("http://localhost:3000/api/balance");
-      // const balanceData = await balanceResponse.json();
-
-      const balanceResponse = await fetch('http://localhost:3000/api/balance')
-      const balanceData = await balanceResponse.json()
+      const balanceData = await apiService.BALANCE.getAllForCurrentMonth()
 
       console.log({ balanceData })
 
