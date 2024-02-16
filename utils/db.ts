@@ -4,10 +4,11 @@ let prisma: PrismaClient
 
 require('dotenv').config()
 
+console.log('process.env.DATABASE_URL', '' + process.env.DATABASE_URL)
+
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient()
 } else {
-  console.log('process.env.DATABASE_URL', process.env.DATABASE_URL)
   // @ts-expect-error
   if (!global.prisma) {
     // @ts-expect-error
