@@ -19,6 +19,7 @@ jobs:
     needs: test_setup
     name: Playwright tests
     timeout-minutes: 5
+    environment: moneytrack_stage
     runs-on: ubuntu-latest
     steps:
       - name: Prepare testing env
