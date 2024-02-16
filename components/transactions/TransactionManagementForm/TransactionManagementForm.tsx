@@ -10,7 +10,7 @@ import Datepicker, { DateValueType } from 'react-tailwindcss-datepicker'
 import { addNewTransaction, updateTransaction } from '@/app/actions'
 import { FinanceSource, TransactionType } from '@prisma/client'
 import { useSession } from 'next-auth/react'
-import { apiService } from '@/app/services/apiService'
+import { apiServiceClient } from '@/app/services/apiServiceClient'
 
 type TimeValueType = {
   hours: number
@@ -106,7 +106,7 @@ const TransactionManagementForm = ({
     const fetchAccounts = async () => {
       setAccountsLoading(true)
 
-      const accountsData = await apiService.ACCOUNT.getAll()
+      const accountsData = await apiServiceClient.ACCOUNT.getAll()
 
       console.log('accounts', accounts)
       setAccounts(accountsData.accounts)

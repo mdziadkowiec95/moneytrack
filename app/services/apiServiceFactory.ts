@@ -1,12 +1,9 @@
-const baseUrl =
-  process && process?.env?.NODE_ENV === 'development'
-    ? 'http://localhost:3000'
-    : ''
-
-export const apiService = {
+export const apiServiceFactory = (getBaseUrl: () => string) => ({
   USER: {
     authenticate: async (email: string, password: string) => {
-      const response = await fetch(`${baseUrl}/api/user/auth/login`, {
+      const ENDPOINT = `${getBaseUrl()}/api/user/auth/login`
+
+      const response = await fetch(ENDPOINT, {
         method: 'post',
         body: JSON.stringify({
           email,
@@ -22,16 +19,20 @@ export const apiService = {
   },
   BALANCE: {
     getAllForCurrentMonth: async () => {
-      const balanceResponse = await fetch(`${baseUrl}/api/balance`)
+      const ENDPOINT = `${getBaseUrl()}/api/balance`
+
+      const balanceResponse = await fetch(ENDPOINT)
 
       return await balanceResponse.json()
     },
   },
   ACCOUNT: {
     getAll: async () => {
-      const response = await fetch(`${baseUrl}/api/financeSource`)
+      const ENDPOINT = `${getBaseUrl()}/api/financeSource`
+
+      const response = await fetch(ENDPOINT)
 
       return await response.json()
     },
   },
-}
+})
