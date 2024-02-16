@@ -13,3 +13,14 @@ services:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
       POSTGRES_DB: tests
+
+  local-db:
+    image: postgres:13
+    restart: always
+    container_name: local-tests-prisma
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: prisma
+      POSTGRES_DB: local-tests

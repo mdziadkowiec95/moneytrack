@@ -43,7 +43,7 @@ export const BalanceCard = async () => {
   }).format(recentBalance)
 
   return (
-    <Card size="3">
+    <Card size="3" data-testid="balance-card">
       <Flex gap="4" justify="center" align="center">
         <Avatar size="5" radius="full" fallback="$" color="indigo" />
         <Box>
