@@ -14,7 +14,7 @@
     "test": "dotenv -e .env.test prisma migrate deploy && dotenv -e .env.test vitest",
     "test-ci": "dotenv -e .env.test prisma migrate deploy && dotenv -e .env.test vitest run",
     "test-e2e": "dotenv -e .env.local prisma migrate dev && playwright test --ui",
-    "test-e2e-ci": "prisma migrate dev playwright test",
+    "test-e2e-ci": "prisma migrate dev && playwright test",
     "prepare": "husky",
     "generate": "prisma generate"
   },
