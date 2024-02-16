@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client'
 
 let prisma: PrismaClient
 
+require('dotenv').config()
+
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient()
 } else {
