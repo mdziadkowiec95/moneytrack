@@ -36,6 +36,33 @@ test('sign in', async ({ page }) => {
   await expect(page.getByTestId('balance-card')).toBeVisible()
 })
 
+test('add account', async ({ page }) => {
+  await page.goto('/')
+
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  // Expect a title "to contain" a substring.
+  await expect(page).toHaveTitle('Sign In')
+  await page.getByLabel('Email').pressSequentially(USERS.STANDARD.email)
+  await page.getByLabel('Password').pressSequentially(USERS.STANDARD.password)
+  await page.getByRole('button', { name: 'Sign in with Credentials' }).click()
+
+  await page.waitForURL('/app')
+  await expect(page).toHaveTitle('Dashboard')
+
+  await page.getByRole('link', { name: /Accounts/ }).click()
+
+  await page.getByRole('link', { name: /Add new account/ }).click()
+
+  await page.getByLabel('Name').pressSequentially('Default Cash Account')
+
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  await expect(
+    page.getByRole('link', { name: /Default Cash Account/ })
+  ).toBeVisible()
+})
+
 // test('get started link', async ({ page }) => {
 //   await page.goto('https://playwright.dev/')
 

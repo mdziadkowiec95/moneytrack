@@ -13,7 +13,7 @@
     "format": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,md}'",
     "test": "dotenv -e .env.test prisma migrate deploy && dotenv -e .env.test vitest",
     "test-ci": "dotenv -e .env.test prisma migrate deploy && dotenv -e .env.test vitest run",
-    "test-e2e": "dotenv -e .env.local prisma migrate dev && playwright test --ui",
+    "test-e2e": "dotenv -e .env.local prisma migrate dev && dotenv -e \".env.local\" playwright test --ui",
     "test-e2e-ci": "playwright test",
     "prepare": "husky",
     "generate": "prisma generate"
@@ -46,6 +46,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "dotenv": "^16.4.4",
     "dotenv-cli": "^7.3.0",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",

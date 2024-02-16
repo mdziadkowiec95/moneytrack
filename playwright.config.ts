@@ -39,8 +39,18 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'setup db',
+      testMatch: /global\.setup\.ts/,
+      teardown: 'cleanup db',
+    },
+    {
+      name: 'cleanup db',
+      testMatch: /global\.teardown\.ts/,
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup db'],
     },
 
     // {
@@ -81,7 +91,7 @@ export default defineConfig({
         command: 'dotenv -e .env.local npm run dev',
         url: baseURL,
         timeout: 120 * 1000,
-        // reuseExistingServer: true,
+        reuseExistingServer: true,
       }
     : undefined,
 })
