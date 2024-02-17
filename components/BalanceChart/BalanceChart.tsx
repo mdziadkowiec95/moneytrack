@@ -18,6 +18,7 @@ import { Line } from 'react-chartjs-2'
 import { getDaysInMonth, getMonthNames } from '@/utils/date'
 import { FinanceSourceHistory, Transaction } from '@prisma/client'
 import { apiServiceClient } from '@/app/services/apiServiceClient'
+import { Card } from '@radix-ui/themes'
 
 ChartJS.register(
   CategoryScale,
@@ -114,7 +115,7 @@ const BalanceChart = () => {
     fetchBalanceData()
   }, [chartLabels])
 
-  return <div>{chartData && <Line data={chartData} options={options} />}</div>
+  return <Card>{chartData && <Line data={chartData} options={options} />}</Card>
 }
 
 export default BalanceChart

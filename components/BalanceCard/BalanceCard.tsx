@@ -48,7 +48,7 @@ export const BalanceCard = async () => {
         <Avatar size="5" radius="full" fallback="$" color="indigo" />
         <Box>
           <Text as="div" size="4" weight="bold">
-            Balance
+            Current balance
           </Text>
           <Text as="div" size="4" color="gray">
             {formattedBalance}

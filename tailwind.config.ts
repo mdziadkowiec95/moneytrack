@@ -15,6 +15,11 @@ const config: Config = {
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
     },
+    colors: {
+      indigo: {
+        dark: '#1e1b4b',
+      },
+    },
   },
   plugins: [],
 }
