@@ -27,8 +27,10 @@ test('sign in', async ({ page }) => {
     })
   ).not.toBeVisible()
 
+  await page.getByRole('button', { name: 'User avatar' }).click()
+
   await expect(
-    page.getByRole('button', {
+    page.getByRole('link', {
       name: 'Sign out',
     })
   ).toBeVisible()

@@ -1,17 +1,11 @@
 'use client'
+
 import React from 'react'
 import * as NavigationMenu from '@radix-ui/react-navigation-menu'
 import { useSession } from 'next-auth/react'
-import { Avatar, Button, Flex } from '@radix-ui/themes'
+import { Avatar, Button, IconButton, Popover } from '@radix-ui/themes'
 import { User } from '@prisma/client'
-
-const routes = [
-  {
-    type: 'AUTHENTICATED',
-    name: 'Sign out',
-    href: '/api/auth/signout',
-  },
-]
+import Link from 'next/link'
 
 type UserAvatarProps = {
   user: User
@@ -21,10 +15,26 @@ const UserAvatarMenu: React.FC<UserAvatarProps> = ({ user }) => {
   const userInitials = `${user.firstName.charAt(0)} ${user.lastName.charAt(0)}`
 
   return (
-    <Flex gap="2" className="ml-4">
+    <div className="ml-4">
       {user.image && <Avatar src={user.image} fallback={userInitials} />}
-      <Avatar fallback={userInitials} />
-    </Flex>
+
+      <Popover.Root>
+        <Popover.Trigger>
+          <IconButton variant="ghost" aria-label="User avatar">
+            <Avatar fallback={userInitials} />
+          </IconButton>
+        </Popover.Trigger>
+        <Popover.Content style={{ width: 360 }}>
+          <ul>
+            <li>
+              <Button asChild>
+                <Link href="/api/auth/signout">Sign out</Link>
+              </Button>
+            </li>
+          </ul>
+        </Popover.Content>
+      </Popover.Root>
+    </div>
   )
 }
 
@@ -35,13 +45,13 @@ const AppNavbar = () => {
   return (
     <NavigationMenu.Root className="relative z-[1] flex w-screen justify-end items-center h-full px-6">
       <NavigationMenu.List className="flex gap-4 items-center h-full ml-auto">
-        {routes.map(({ href, name }) => (
+        {/* {routes.map(({ href, name }) => (
           <NavigationMenu.Item key={name}>
             <NavigationMenu.Link href={href}>
               <Button>{name}</Button>
             </NavigationMenu.Link>
           </NavigationMenu.Item>
-        ))}
+        ))} */}
 
         {/* <NavigationMenu.Indicator className="data-[state=visible]:animate-fadeIn data-[state=hidden]:animate-fadeOut top-full z-[1] flex h-[10px] items-end justify-center overflow-hidden transition-[width,transform_250ms_ease]">
           <div className="relative top-[70%] h-[10px] w-[10px] rotate-[45deg] rounded-tl-[2px] bg-white" />

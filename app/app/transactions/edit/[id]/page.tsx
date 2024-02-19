@@ -7,6 +7,7 @@ const EditTransaction = async ({ params }: { params: { id: string } }) => {
   // @TODO Validate user
   const transaction = await db.transaction.findUnique({
     where: { id: params.id },
+    include: { category: true },
   })
 
   return (

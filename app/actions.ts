@@ -30,11 +30,14 @@ export async function addNewTransaction(formData: FormData) {
     throw new Error('User not authenticated')
   }
 
+  const categoryId = Number(formData.get('categoryId') as string)
+
   const transaction = {
     title: formData.get('title') as string,
     amount: Number(formData.get('amount')),
     date: formData.get('date') as unknown as Date,
     type: formData.get('type') as TransactionType,
+    categoryId: categoryId,
     financeSourceId: formData.get('financeSourceId') as string,
   }
 
@@ -85,6 +88,7 @@ export async function addNewTransaction(formData: FormData) {
       date: transaction.date,
       type: transaction.type,
       userId: session?.user.id,
+      categoryId: categoryId,
       financeSourceId: transaction.financeSourceId,
       financeSourceHistory: {
         create: {
@@ -140,6 +144,7 @@ export async function updateTransaction(formData: FormData) {
     amount: Number(formData.get('amount')),
     date: formData.get('date') as unknown as Date,
     type: formData.get('type') as TransactionType,
+    categoryId: Number(formData.get('categoryId') as string),
     financeSourceId: formData.get('financeSourceId') as string,
   }
 

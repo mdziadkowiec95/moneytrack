@@ -30,7 +30,7 @@ export default function RootLayout({
             <Theme
               scaling="110%"
               appearance="dark"
-              panelBackground="translucent"
+              // panelBackground="translucent"
               accentColor="iris"
               grayColor="slate"
               radius="full"

@@ -8,7 +8,12 @@ import { Button, Heading, Select, TextField } from '@radix-ui/themes'
 
 import Datepicker, { DateValueType } from 'react-tailwindcss-datepicker'
 import { addNewTransaction, updateTransaction } from '@/app/actions'
-import { FinanceSource, TransactionType } from '@prisma/client'
+import {
+  Category,
+  FinanceSource,
+  Transaction,
+  TransactionType,
+} from '@prisma/client'
 import { useSession } from 'next-auth/react'
 import { apiServiceClient } from '@/app/services/apiServiceClient'
 
@@ -24,13 +29,12 @@ type TransationManagementFormState = {
   time: TimeValueType
   amount?: number
   title: string
+  categoryId?: Category['id']
   financeSourceId?: string
 }
 
-type InitialData = TransationManagementFormState & {
-  id: string
-  date: Date
-  financeSourceId: string
+type InitialData = Transaction & {
+  category?: Category
 }
 
 const isIncome = (type: TransactionType) => type === TransactionType.INCOME
@@ -40,8 +44,10 @@ const toggleGroupItemClasses =
 
 const TransactionManagementForm = ({
   initialData,
+  categories,
 }: {
   initialData?: InitialData
+  categories: Category[]
 }) => {
   const session = useSession()
   const [formState, updateFormState] = useState<TransationManagementFormState>(
@@ -62,6 +68,7 @@ const TransactionManagementForm = ({
           minutes,
           seconds,
         },
+        categoryId: undefined,
         amount: undefined,
         title: '',
         financeSourceId: undefined,
@@ -75,18 +82,17 @@ const TransactionManagementForm = ({
             startDate: new Date(initialData.date),
             endDate: new Date(initialData.date),
           }
-        }
 
-        if (initialData.time) {
           initialState.time = {
-            hours: initialData.time.hours,
-            minutes: initialData.time.minutes,
-            seconds: initialData.time.seconds,
+            hours: new Date(initialData.date).getHours(),
+            minutes: new Date(initialData.date).getMinutes(),
+            seconds: new Date(initialData.date).getSeconds(),
           }
         }
 
         initialState.amount = initialData.amount
         initialState.title = initialData.title
+        initialState.categoryId = initialData?.category?.id
 
         console.log('initialData.accountId', initialData.financeSourceId)
 
@@ -111,11 +117,9 @@ const TransactionManagementForm = ({
       console.log('accounts', accounts)
       setAccounts(accountsData.accounts)
 
-      console.log(' accounts.accounts[0].id', accountsData.accounts[0].id)
-
       updateFormState((state) => ({
         ...state,
-        financeSourceId: accountsData.accounts[0].id,
+        financeSourceId: accountsData.accounts[0]?.id,
       }))
 
       setAccountsLoading(false)
@@ -148,12 +152,12 @@ const TransactionManagementForm = ({
     }))
   }
 
-  const onAccountChange = (selectedAccountId: string) => {
-    if (!selectedAccountId) return
+  const onSelectChange = (fieldName: string, value: string) => {
+    if (!value) return
 
     updateFormState((state) => ({
       ...state,
-      financeSourceId: selectedAccountId,
+      [fieldName]: value,
     }))
   }
 
@@ -302,7 +306,7 @@ const TransactionManagementForm = ({
             name="financeSourceId"
             // defaultValue={formState.accountId}
             value={formState.financeSourceId}
-            onValueChange={onAccountChange}
+            onValueChange={(value) => onSelectChange('financeSourceId', value)}
           >
             <Select.Trigger />
             <Select.Content>
@@ -339,15 +343,40 @@ const TransactionManagementForm = ({
         </Form.Field>
         <Form.Field className="grid mb-[10px]" name="title">
           <Form.Label>Date</Form.Label>
-          {formState.date && (
-            <Datepicker
-              inputName="date"
-              useRange={false}
-              asSingle={true}
-              value={formState.date}
-              onChange={onDateChange}
-            />
-          )}
+          <Datepicker
+            inputName="date"
+            useRange={false}
+            asSingle={true}
+            value={formState.date}
+            onChange={onDateChange}
+          />
+        </Form.Field>
+
+        <Form.Field name="categoryId">
+          <div className="flex items-baseline justify-between">
+            <Form.Label>Category</Form.Label>
+          </div>
+
+          <Select.Root
+            name="categoryId"
+            required
+            value={
+              formState.categoryId ? String(formState.categoryId) : undefined
+            }
+            onValueChange={(selectedCategory) =>
+              onSelectChange('categoryId', selectedCategory)
+            }
+          >
+            <Select.Trigger placeholder="Choose Category" />
+            <Select.Content>
+              {categories &&
+                categories.map((category) => (
+                  <Select.Item key={category.id} value={String(category.id)}>
+                    {category.displayName}
+                  </Select.Item>
+                ))}
+            </Select.Content>
+          </Select.Root>
         </Form.Field>
 
         <Form.Field name="time">
@@ -357,6 +386,7 @@ const TransactionManagementForm = ({
               value={getValueForTimeInput(formState.time)}
               type="time"
               step={2}
+              size="3"
               // min="09:00"
               // max="18:00"
             />

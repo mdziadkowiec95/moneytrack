@@ -1,5 +1,6 @@
 import { BalanceCard } from '@/components/BalanceCard/BalanceCard'
 import BalanceChart from '@/components/BalanceChart/BalanceChart'
+import TransactionsWidget from '@/components/dashboard/TransactionsWidget/TransactionsWidget'
 import { Box, Button, Card, Flex, Grid, Heading, Text } from '@radix-ui/themes'
 import Link from 'next/link'
 
@@ -42,16 +43,7 @@ const Dashboard = () => {
           Outcome last month
         </DashboardCard>
 
-        <Card size="5">
-          <Heading size="4">Transactions history</Heading>
-          <p>Transaction 1</p>
-          <p>Transaction 1</p>
-          <p>Transaction 1</p>
-          <p>Transaction 1</p>
-          <p>Transaction 1</p>
-          <p>Transaction 1</p>
-          <p>Transaction 1s</p>
-        </Card>
+        <TransactionsWidget />
         <div className="col-span-2">
           <BalanceChart />
         </div>

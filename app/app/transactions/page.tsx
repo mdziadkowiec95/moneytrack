@@ -1,8 +1,7 @@
-import { DeleteTransactionButton } from '@/components/transactions/DeleteTransactionButton/DeleteTransactionButton'
+import { dbService } from '@/app/services/dbService'
+import Transaction from '@/components/transactions/Transaction/Transaction'
 import { getAuthServerSession } from '@/utils/auth'
-import { db } from '@/utils/db'
-import { Transaction, TransactionType } from '@prisma/client'
-import { Avatar, Box, Button, Card, Flex, Grid, Text } from '@radix-ui/themes'
+import { Button, Grid } from '@radix-ui/themes'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -13,9 +12,7 @@ const Transactions = async () => {
     return redirect('/api/auth/signin')
   }
 
-  const transactions = (await db.transaction.findMany({
-    where: { userId: session.user.id },
-  })) as Transaction[]
+  const transactions = await dbService.getTransactions()
 
   return (
     <>
@@ -30,32 +27,7 @@ const Transactions = async () => {
 
       <Grid className="my-6" gap="2">
         {transactions.map((transaction) => (
-          <Card key={transaction.id} asChild>
-            <Link href={`/app/transactions/edit/${transaction.id}`}>
-              <Flex gap="3" align="center">
-                <Avatar size="3" radius="full" fallback="T" />
-                <Box asChild>
-                  <Flex justify="between">
-                    <div>
-                      <Text as="p" size="2" weight="bold">
-                        {transaction.title}
-                      </Text>
-                      <Text as="p" size="2" color="gray">
-                        {transaction.type === TransactionType.INCOME
-                          ? '+'
-                          : '-'}{' '}
-                        {transaction.amount} PLN
-                      </Text>
-                      <Text as="p" size="2" color="gray">
-                        {transaction.date.toLocaleString()}{' '}
-                      </Text>
-                    </div>
-                    <DeleteTransactionButton id={transaction.id} />
-                  </Flex>
-                </Box>
-              </Flex>
-            </Link>
-          </Card>
+          <Transaction key={transaction.id} {...transaction} />
         ))}
       </Grid>
     </>

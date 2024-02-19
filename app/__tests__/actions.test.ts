@@ -10,6 +10,7 @@ import {
 
 import { db } from '@/utils/db'
 import {
+  Category,
   FinanceSource,
   FinanceSourceType,
   Transaction,
@@ -50,6 +51,7 @@ vi.mock('next/cache', () => {
 
 let financeSource: FinanceSource
 let user: User
+let category: Category
 
 const getFinanceSourceHistories = async () =>
   db.financeSourceHistory.findMany({
@@ -96,6 +98,7 @@ const addNewTransactionUsingAction = async (
   const formData = new FormData()
 
   formData.append('id', `${data.id}`)
+  formData.append('categoryId', `${category.id}`)
   formData.append('title', `${data.title}`)
   formData.append('amount', `${data.amount}`)
   formData.append('description', `${data.description}`)
@@ -110,6 +113,7 @@ const updateTransactionUsingAction = async (data: Partial<Transaction>) => {
   const formData = new FormData()
 
   formData.append('id', `${data.id}`)
+  formData.append('categoryId', `${category.id}`)
   formData.append('title', `${data.title}`)
   formData.append('amount', `${data.amount}`)
   formData.append('description', `${data.description}`)
@@ -124,6 +128,7 @@ const restoreDB = async () => {
   const deleteTransactions = db.transaction.deleteMany()
   const deleteFinanceSources = db.financeSource.deleteMany()
   const deleteFinanceSourceHistories = db.financeSourceHistory.deleteMany({})
+  const deleteCategories = db.category.deleteMany({})
 
   const deleteUsers = db.user.deleteMany()
 
@@ -131,6 +136,7 @@ const restoreDB = async () => {
     deleteTransactions,
     deleteFinanceSourceHistories,
     deleteFinanceSources,
+    deleteCategories,
     deleteUsers,
   ])
 }
@@ -163,6 +169,14 @@ beforeEach(async () => {
 
   //@ts-expect-error - fix this later
   getAuthServerSession.mockResolvedValue({ user })
+
+  category = await db.category.create({
+    data: {
+      id: 1,
+      name: 'home',
+      displayName: 'Home',
+    },
+  })
 
   financeSource = (await createAccount()) as FinanceSource
 })
@@ -197,6 +211,7 @@ describe('addNewTransaction', () => {
       expect(transactionsInDB[0]).toEqual({
         id: expect.any(String),
         amount: 1000,
+        categoryId: category.id,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         date: new Date(2024, 1, 7, 0, 0, 0),
@@ -459,6 +474,7 @@ describe('updateTransaction', () => {
     expect(allTransactions).toHaveLength(1)
     expect(allTransactions[0]).toEqual({
       amount: 1000,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 7, 0, 0, 0),
       description: 'Example description',
@@ -517,6 +533,7 @@ describe('updateTransaction', () => {
     expect(allTransactionsAfterUpdate).toHaveLength(2)
     expect(allTransactionsAfterUpdate[1]).toEqual({
       amount: 700,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 7, 0, 0, 0),
       description: 'Example description',
@@ -588,6 +605,7 @@ describe('updateTransaction', () => {
     expect(allTransactionsAfterUpdate).toHaveLength(3)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 700,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 3, 0, 0, 0),
       description: 'Example description',
@@ -661,6 +679,7 @@ describe('updateTransaction', () => {
     expect(allTransactionsAfterUpdate).toHaveLength(3)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 150,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 6, 0, 0, 0),
       description: null,
@@ -674,6 +693,7 @@ describe('updateTransaction', () => {
 
     expect(allTransactionsAfterUpdate[2]).toEqual({
       amount: 350,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 8, 0, 0, 0),
       description: 'Example description',
@@ -747,6 +767,7 @@ describe('updateTransaction', () => {
     expect(allTransactionsAfterUpdate).toHaveLength(3)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 200,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 9, 0, 0, 0),
       description: null,
@@ -760,6 +781,7 @@ describe('updateTransaction', () => {
 
     expect(allTransactionsAfterUpdate[2]).toEqual({
       amount: 500,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 13, 0, 0, 0),
       description: null,
@@ -844,6 +866,7 @@ describe('updateTransaction', () => {
     expect(allTransactionsAfterUpdate).toHaveLength(4)
     expect(allTransactionsAfterUpdate[0]).toEqual({
       amount: 100,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 6, 0, 0, 0),
       description: null,
@@ -857,6 +880,7 @@ describe('updateTransaction', () => {
 
     expect(allTransactionsAfterUpdate[2]).toEqual({
       amount: 400,
+      categoryId: category.id,
       createdAt: expect.any(Date),
       date: new Date(2024, 1, 9, 0, 0, 0),
       description: 'Example description',
@@ -903,6 +927,7 @@ describe('deleteTransaction', () => {
 
       expect(firstTransaction).toEqual({
         id: expect.any(String),
+        categoryId: category.id,
         type: TransactionType.INCOME,
         title: 'Test 1 INCOME',
         amount: 300,

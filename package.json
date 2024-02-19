@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "migrate:dev": "dotenv -e .env.local prisma migrate dev",
+    "migrate:roll-back": "prisma migrate resolve --rolled-back",
+    "prisma": "prisma",
     "start": "next start",
     "start:dev": "next start -p 3000",
     "lint": "eslint '*/**/*.{js,jsx,ts,tsx}' --quiet",
@@ -43,6 +46,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.41.2",
+    "@tailwindcss/forms": "^0.5.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

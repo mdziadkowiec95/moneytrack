@@ -1,13 +1,6 @@
-import { TransactionType } from '@prisma/client'
-
-export const calculateBalance = (
-  currentBalance: number,
-  amount: number,
-  type: TransactionType
-) => {
-  if (type === TransactionType.INCOME) {
-    return currentBalance + amount
-  }
-
-  return currentBalance - amount
+export const formatAmount = (amount: number, currency = 'PLN') => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount)
 }
