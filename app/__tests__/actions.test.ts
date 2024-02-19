@@ -149,7 +149,7 @@ const createAccount = async () => {
 
   await addNewAccount(accountFormData)
 
-  return await db.financeSource.findFirst({
+  return db.financeSource.findFirst({
     where: {
       name: 'Cash',
     },
@@ -173,12 +173,14 @@ beforeEach(async () => {
 
     category = await db.category.create({
       data: {
-        name: 'home',
-        displayName: 'Home',
+        name: 'test',
+        displayName: 'Test',
       },
     })
 
     financeSource = (await createAccount()) as FinanceSource
+
+    console.log('financeSource in beforeEach', financeSource)
   } catch (error) {
     console.error(error)
   }
@@ -197,6 +199,8 @@ afterAll(async () => {
 describe('addNewTransaction', () => {
   describe('when adding first transaction', () => {
     test('should create new transaction properly when no transactions added yet', async () => {
+      console.log('financeSource in first test', financeSource)
+
       await addNewTransactionUsingAction({
         title: 'Integration Test 1 INCOME',
         amount: 1000,
@@ -227,6 +231,8 @@ describe('addNewTransaction', () => {
     })
 
     test('should create related finance source history entry with updated balance', async () => {
+      console.log('financeSource in second test', financeSource)
+
       await addNewTransactionUsingAction({
         title: 'Integration Test 1 INCOME',
         amount: 1000,
