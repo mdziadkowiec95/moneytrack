@@ -128,7 +128,7 @@ const restoreDB = async () => {
   const deleteTransactions = db.transaction.deleteMany()
   const deleteFinanceSources = db.financeSource.deleteMany()
   const deleteFinanceSourceHistories = db.financeSourceHistory.deleteMany({})
-  const deleteCategories = db.category.deleteMany({})
+  const deleteCategories = db.category.deleteMany()
 
   const deleteUsers = db.user.deleteMany()
 
@@ -157,28 +157,31 @@ const createAccount = async () => {
 }
 
 beforeEach(async () => {
-  user = await db.user.create({
-    data: {
-      email: 'integration_test_1@mailinator.com',
-      password: 'test1234',
-      username: 'integration_test_1',
-      firstName: 'Integration',
-      lastName: 'Test',
-    },
-  })
+  try {
+    user = await db.user.create({
+      data: {
+        email: 'integration_test_1@mailinator.com',
+        password: 'test1234',
+        username: 'integration_test_1',
+        firstName: 'Integration',
+        lastName: 'Test',
+      },
+    })
 
-  //@ts-expect-error - fix this later
-  getAuthServerSession.mockResolvedValue({ user })
+    //@ts-expect-error - fix this later
+    getAuthServerSession.mockResolvedValue({ user })
 
-  category = await db.category.create({
-    data: {
-      id: 1,
-      name: 'home',
-      displayName: 'Home',
-    },
-  })
+    category = await db.category.create({
+      data: {
+        name: 'home',
+        displayName: 'Home',
+      },
+    })
 
-  financeSource = (await createAccount()) as FinanceSource
+    financeSource = (await createAccount()) as FinanceSource
+  } catch (error) {
+    console.error(error)
+  }
 })
 
 afterEach(async () => {
