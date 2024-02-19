@@ -1,4 +1,4 @@
-name: "CI"
+name: 'CI'
 on:
   push:
     branches: [main, master]
@@ -7,17 +7,17 @@ on:
 
 jobs:
   tests:
-    name: "Integration testing"
+    name: 'Integration testing'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: "Set up environment"
+      - name: 'Set up environment'
         run: docker compose -f docker-compose.yml up -d --wait
       - uses: actions/checkout@v4
       - name: Use Node.js 20.x
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
-      - run: npm install
-      - name: "Test integration"
+      - run: npm ci
+      - name: 'Test integration'
         run: npm run test-ci

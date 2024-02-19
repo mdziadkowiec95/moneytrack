@@ -134,9 +134,9 @@ const restoreDB = async () => {
 
   await db.$transaction([
     deleteTransactions,
+    deleteCategories,
     deleteFinanceSourceHistories,
     deleteFinanceSources,
-    deleteCategories,
     deleteUsers,
   ])
 }
