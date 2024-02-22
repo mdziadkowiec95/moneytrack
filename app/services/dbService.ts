@@ -58,6 +58,12 @@ export const dbService = {
               displayName: true,
             },
           },
+          financeSource: {
+            select: {
+              id: true,
+              currency: true,
+            },
+          },
         },
         take,
       }),

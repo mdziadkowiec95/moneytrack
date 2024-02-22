@@ -9,7 +9,7 @@ import { NextPage } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-export const Transactions: NextPage<{
+const Transactions: NextPage<{
   searchParams: {
     accountId?: string
   }

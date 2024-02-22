@@ -124,12 +124,12 @@ const TransactionManagementForm = ({
       const accountsData = await apiServiceClient.ACCOUNT.getAll()
 
       console.log('accounts', accounts)
-      setAccounts(accountsData.accounts)
+      setAccounts(accountsData)
 
       updateFormState((state) => ({
         ...state,
-        financeSourceId: accountsData.accounts[0]?.id,
-        currency: accountsData.accounts[0]?.currency,
+        financeSourceId: accountsData[0]?.id,
+        currency: accountsData[0]?.currency,
       }))
 
       setAccountsLoading(false)
