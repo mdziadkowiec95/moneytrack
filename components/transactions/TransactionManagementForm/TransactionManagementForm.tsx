@@ -230,6 +230,7 @@ const TransactionManagementForm = ({
 
     formData.set('date', transactionDate.toISOString())
     formData.set('type', formState.type)
+    formData.set('amount', formState.amount?.toString() ?? '0')
 
     if (!initialData) {
       addNewTransaction(formData)
