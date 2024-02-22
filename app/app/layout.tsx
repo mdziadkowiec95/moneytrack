@@ -36,7 +36,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ children, name, href }) => {
         >
           <IconComponent width="22px" height="22px" />
         </IconButton>
-        <p className="mt-4 text-sm">{children}</p>
+        <p className="mt-4 text-lg font-semibold">{children}</p>
       </Link>
     </li>
   )
@@ -54,14 +54,14 @@ const DashboardLayout = ({ children }) => {
     { name: 'accounts', href: '/app/accounts', children: 'Accounts' },
   ]
   return (
-    <Grid rows="100px 1fr" columns="200px 1fr" className="grid-flow-col">
-      <header className="bg-indigo-dark fixed top-0 left-0 h-24 row-span-2">
+    <Grid rows="100px 1fr" columns="230px 1fr" className="grid-flow-col">
+      <header className="fixed top-0 left-0 h-24 row-span-2">
         <AppNavbar />
       </header>
 
       <Box
         asChild
-        className="bg-indigo-dark fixed top-0 left-0 h-screen p-5 pt-[100px]"
+        className="bg-indigo-dark bg-gradient-sidebar fixed top-0 left-0 h-screen w-[200px] p-5 pt-[200px] rounded-tr-full"
       >
         <aside>
           <nav>

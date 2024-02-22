@@ -5,9 +5,11 @@ export const dbService = {
   getTransactions: async ({
     take = 10,
     financeSourceId,
+    searchQuery,
   }: {
     take?: number
     financeSourceId?: string
+    searchQuery?: string
   } = {}) => {
     const session = await getAuthServerSession()
 
@@ -15,6 +17,10 @@ export const dbService = {
       where: {
         userId: session?.user.id,
         financeSourceId: financeSourceId,
+        title: {
+          contains: searchQuery,
+          mode: 'insensitive',
+        },
       },
       orderBy: {
         date: 'desc',

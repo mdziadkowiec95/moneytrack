@@ -17,7 +17,8 @@ import {
 import React, { useState } from 'react'
 
 type TransactionFilters = {
-  accountId: string
+  accountId?: string
+  searchQuery?: string
 }
 
 export type TransactionFilterFormData = TypedFormData<TransactionFilters>
@@ -42,7 +43,21 @@ const TransactionFilters = ({
       formData.append('accountId', accountId)
     }
 
-    onFiltersChange?.(formData)
+    onFiltersChange(formData)
+  }
+
+  const onSerach = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const formData = createFormData<TransactionFilters>()
+
+      formData.append('searchQuery', event.currentTarget.value)
+
+      setSelectedAccount(undefined)
+
+      onFiltersChange(formData)
+
+      event.currentTarget.blur()
+    }
   }
 
   return (
@@ -51,7 +66,7 @@ const TransactionFilters = ({
         <TextField.Slot>
           <MagnifyingGlassIcon height="16" width="16" />
         </TextField.Slot>
-        <TextField.Input placeholder="Search transactions" />
+        <TextField.Input onKeyUp={onSerach} placeholder="Search transactions" />
       </TextField.Root>
 
       <AccountChooser

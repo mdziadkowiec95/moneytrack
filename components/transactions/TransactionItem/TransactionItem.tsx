@@ -1,3 +1,5 @@
+'use client'
+
 import type {
   Category,
   Currency,
@@ -37,6 +39,7 @@ type TransactionProps = Pick<
   category: Pick<Category, 'id' | 'name' | 'displayName'>
   financeSource: Pick<FinanceSource, 'id' | 'currency'>
   baseCurrency: Currency
+  cardSize?: 'small' | 'large'
 }
 
 const categoryIconMap = {
@@ -64,6 +67,7 @@ const Transaction = ({
   category,
   financeSource: { currency },
   baseCurrency,
+  cardSize = 'large',
 }: TransactionProps) => {
   const categoryIcon = getCategoryIcon(category.name) || homeIcon
 
@@ -77,7 +81,12 @@ const Transaction = ({
     !isBaseCurrency && `Converted from ${formatCurrency(currency, amount)}`
 
   return (
-    <Card className="my-1" variant="ghost" asChild>
+    <Card
+      className="my-1"
+      variant="ghost"
+      asChild
+      size={cardSize === 'large' ? '4' : '1'}
+    >
       <Link href={`/app/transactions/edit/${id}`}>
         <Flex gap="2" align="center">
           {categoryIcon && (

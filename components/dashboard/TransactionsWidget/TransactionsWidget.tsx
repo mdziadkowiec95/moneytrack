@@ -26,6 +26,7 @@ const TransactionsWidget = async () => {
           key={transaction.id}
           {...transaction}
           baseCurrency={baseCurrency}
+          cardSize="small"
         />
       ))}
 

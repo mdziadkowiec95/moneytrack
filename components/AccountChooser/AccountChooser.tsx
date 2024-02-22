@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Dialog, Flex, Select } from '@radix-ui/themes'
 import { FinanceSource } from '@prisma/client'
 
@@ -19,7 +19,11 @@ const AccountChooser = ({
 }: AccountChooserProps) => {
   const [selectedAccount, setSelectedAccount] = useState<
     SelectedAccountId | undefined
-  >(selectedAccountId)
+  >()
+
+  useEffect(() => {
+    setSelectedAccount(selectedAccountId)
+  }, [selectedAccountId])
 
   const getTriggerText = (accountId?: FinanceSource['id']) => {
     if (accountId) {

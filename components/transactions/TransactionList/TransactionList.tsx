@@ -11,6 +11,8 @@ import TransactionItem from '@/components/transactions/TransactionItem/Transacti
 import TransactionFilters, {
   TransactionFilterFormData,
 } from '../TransactionFilters/TransactionFilters'
+import { Button } from '@radix-ui/themes'
+import { apiServiceClient } from '@/app/services/apiServiceClient'
 
 type TransactionListProps = {
   initialTransactions: (Transaction & {
@@ -32,11 +34,29 @@ const TransactionList = ({
     TransactionListProps['initialTransactions']
   >([])
 
+  const [startFrom, setStartFrom] = useState(0)
+
   useEffect(() => {
     setTransactions(initialTransactions ?? [])
   }, [initialTransactions])
 
-  console.log('availableAccounts', availableAccounts)
+  useEffect(() => {
+    if (startFrom === 0) return
+
+    const fetchMoreTransactions = async () => {
+      const newTransactions = await apiServiceClient.TRANSACTIONS.getPaginated({
+        skip: startFrom,
+      })
+
+      setTransactions((prev) => [...prev, ...newTransactions])
+    }
+
+    fetchMoreTransactions()
+  }, [startFrom])
+
+  const onLoadMoreClick = () => {
+    setStartFrom((prev) => prev + 5)
+  }
 
   return (
     <div>
@@ -51,6 +71,8 @@ const TransactionList = ({
           baseCurrency={baseCurrency}
         />
       ))}
+
+      <Button onClick={onLoadMoreClick}>Load more</Button>
     </div>
   )
 }

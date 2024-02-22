@@ -677,9 +677,15 @@ export async function navigateTransactionsWithSearchParams(
 ) {
   const params = new URLSearchParams()
   const accountId = formData.get('accountId')
+  const searchQuery = formData.get('searchQuery')
 
   if (accountId) {
     params.set('accountId', accountId)
+  }
+
+  if (searchQuery) {
+    params.set('searchQuery', searchQuery)
+    params.delete('accountId')
   }
 
   redirect(`/app/transactions?${params.toString()}`)

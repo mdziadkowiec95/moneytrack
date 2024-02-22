@@ -55,48 +55,6 @@ const Dashboard = () => {
         </DashboardCard>
         <DashboardCard>Frequency of transactons</DashboardCard>
       </Grid>
-
-      {/* <Grid columns="3" className="pt-4" gap="2">
-        <Card size="2" asChild>
-          <Link href="/app/accounts">
-            <Flex gap="3" align="center">
-              <Avatar size="3" radius="full" fallback="A" color="indigo" />
-              <Box>
-                <Text size="2" weight="bold">
-                  Accounts
-                </Text>
-              </Box>
-            </Flex>
-          </Link>
-        </Card>
-
-        <Card size="2" asChild>
-          <Link href="/app/transactions">
-            {' '}
-            <Flex gap="3" align="center">
-              <Avatar size="3" radius="full" fallback="T" color="indigo" />
-              <Box>
-                <Text size="2" weight="bold">
-                  Transactions
-                </Text>
-              </Box>
-            </Flex>
-          </Link>
-        </Card>
-
-        <Card size="2" asChild>
-          <Link href="/app/balance">
-            <Flex gap="3" align="center">
-              <Avatar size="3" radius="full" fallback="B" color="indigo" />
-              <Box>
-                <Text size="2" weight="bold">
-                  Balance
-                </Text>
-              </Box>
-            </Flex>
-          </Link>
-        </Card>
-      </Grid> */}
     </div>
   )
 }

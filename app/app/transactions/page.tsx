@@ -9,14 +9,13 @@ import { NextPage } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-const Transactions: NextPage<{
+export const Transactions: NextPage<{
   searchParams: {
     accountId?: string
+    searchQuery?: string
   }
 }> = async ({ searchParams }) => {
   const session = await getAuthServerSession()
-
-  console.log({ searchParams })
 
   if (!session?.user.id) {
     return redirect('/api/auth/signin')
@@ -24,6 +23,8 @@ const Transactions: NextPage<{
 
   const transactions = await dbService.getTransactions({
     financeSourceId: searchParams?.accountId,
+    searchQuery: searchParams?.searchQuery,
+    take: 5,
   })
 
   const baseCurrency = await getProfileBaseCurrency()
@@ -31,15 +32,11 @@ const Transactions: NextPage<{
 
   return (
     <>
-      <Grid columns="2">
+      <Grid columns="3">
         <Button asChild>
           <Link href="/app/transactions/addNew">Add transaction</Link>
         </Button>
-        <Button asChild>
-          <Link href="/app/">Dashboard</Link>
-        </Button>
       </Grid>
-
       <Grid className="my-6" gap="2">
         <TransactionList
           initialTransactions={transactions}
