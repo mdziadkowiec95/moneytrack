@@ -1,9 +1,19 @@
 import AccountManagementForm from '@/components/AccountManagementForm/AccountManagementForm'
+import {
+  getAvailableCurrencies,
+  getProfileBaseCurrency,
+} from '@/utils/currency'
 
-const AddNewAccount = () => {
+const AddNewAccount = async () => {
+  const availableCurrencies = await getAvailableCurrencies()
+  const baseCurrency = await getProfileBaseCurrency()
+
   return (
     <div>
-      <AccountManagementForm />
+      <AccountManagementForm
+        availableCurrencies={availableCurrencies}
+        baseCurrency={baseCurrency}
+      />
     </div>
   )
 }

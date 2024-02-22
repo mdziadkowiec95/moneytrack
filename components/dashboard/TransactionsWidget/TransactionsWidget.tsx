@@ -1,5 +1,5 @@
 import { dbService } from '@/app/services/dbService'
-import Transaction from '@/components/transactions/Transaction/Transaction'
+import Transaction from '@/components/transactions/TransactionItem/TransactionItem'
 import { ArrowRightIcon } from '@radix-ui/react-icons'
 import { Button, Card, Heading } from '@radix-ui/themes'
 import Link from 'next/link'

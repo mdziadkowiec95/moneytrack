@@ -6,6 +6,7 @@ import { Button, Heading, Select, TextField } from '@radix-ui/themes'
 
 import { addNewAccount } from '@/app/actions'
 import { FinanceSourceType } from '@prisma/client'
+import { getCurrencyDisplayName } from '@/utils/currency'
 
 const ACCOUNTS = [
   {
@@ -22,21 +23,32 @@ const ACCOUNTS = [
   },
 ]
 
-type TransationManagementFormState = {
+type AccountManagementFormState = {
   name?: string
   financeSourceType?: FinanceSourceType
 }
 
-type InitialData = TransationManagementFormState & {
+type InitialData = AccountManagementFormState & {
   id: string
   financeSourceType: FinanceSourceType
 }
 
-const AccountManagementForm = ({}: { initialData?: InitialData }) => {
-  const [formState, updateFormState] = useState<TransationManagementFormState>(
+type AccountManagementFormProps = {
+  availableCurrencies: string[]
+  baseCurrency: string
+  initialData?: InitialData
+}
+
+const AccountManagementForm = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  initialData,
+  availableCurrencies,
+  baseCurrency,
+}: AccountManagementFormProps) => {
+  const [formState, updateFormState] = useState<AccountManagementFormState>(
     () => {
-      const initialState: TransationManagementFormState = {
-        name: undefined,
+      const initialState: AccountManagementFormState = {
+        name: '',
         financeSourceType: ACCOUNTS[0].value,
       }
 
@@ -61,9 +73,6 @@ const AccountManagementForm = ({}: { initialData?: InitialData }) => {
   }
 
   const onSubmit = (formData: FormData) => {
-    console.log(formData.get('name'))
-    console.log(formData.get('accountType'))
-
     addNewAccount(formData)
   }
 
@@ -78,7 +87,7 @@ const AccountManagementForm = ({}: { initialData?: InitialData }) => {
 
           <Select.Root
             name="financeSourceType"
-            // defaultValue={formState.accountId}
+            size="3"
             value={formState.financeSourceType}
             onValueChange={onAccountChange}
           >
@@ -96,12 +105,6 @@ const AccountManagementForm = ({}: { initialData?: InitialData }) => {
         <Form.Field className="grid mb-[10px]" name="name">
           <div className="flex items-baseline justify-between">
             <Form.Label>Name</Form.Label>
-            {/* <Form.Message
-            className="text-[13px] text-black opacity-[0.8]"
-            match="valueMissing"
-          >
-            Please enter a question
-          </Form.Message> */}
           </div>
           <Form.Control asChild>
             <TextField.Input
@@ -112,6 +115,22 @@ const AccountManagementForm = ({}: { initialData?: InitialData }) => {
               placeholder="Name"
             />
           </Form.Control>
+        </Form.Field>
+
+        <Form.Field name="currency">
+          <div className="flex items-baseline justify-between">
+            <Form.Label>Currency</Form.Label>
+          </div>
+          <Select.Root name="currency" defaultValue={baseCurrency} size="3">
+            <Select.Trigger />
+            <Select.Content>
+              {availableCurrencies.map((currency) => (
+                <Select.Item key={currency} value={currency}>
+                  {getCurrencyDisplayName(currency)}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
         </Form.Field>
 
         <Form.Submit asChild>

@@ -1,5 +1,19 @@
-import type { Category, Transaction } from '@prisma/client'
-import { Avatar, Box, Card, Flex, Text } from '@radix-ui/themes'
+import type {
+  Category,
+  Currency,
+  FinanceSource,
+  Transaction,
+} from '@prisma/client'
+import {
+  Avatar,
+  Box,
+  Card,
+  Flex,
+  Grid,
+  IconButton,
+  Text,
+  Tooltip,
+} from '@radix-ui/themes'
 import Image from 'next/image'
 
 import homeIcon from '@/assets/icons/home.svg'
@@ -12,14 +26,17 @@ import investmentsIcon from '@/assets/icons/investments.svg'
 import restIcon from '@/assets/icons/rest.svg'
 import shoppingIcon from '@/assets/icons/shopping.svg'
 import transportIcon from '@/assets/icons/transport.svg'
-import { formatAmount } from '@/utils/transactions'
 import Link from 'next/link'
+import { formatCurrency, formatCurrencyWithConversion } from '@/utils/currency'
+import { InfoCircledIcon } from '@radix-ui/react-icons'
 
 type TransactionProps = Pick<
   Transaction,
   'id' | 'title' | 'date' | 'amount'
 > & {
   category: Pick<Category, 'id' | 'name' | 'displayName'>
+  financeSource: Pick<FinanceSource, 'id' | 'currency'>
+  baseCurrency: Currency
 }
 
 const categoryIconMap = {
@@ -45,8 +62,19 @@ const Transaction = ({
   date,
   amount,
   category,
+  financeSource: { currency },
+  baseCurrency,
 }: TransactionProps) => {
   const categoryIcon = getCategoryIcon(category.name) || homeIcon
+
+  const isBaseCurrency = currency === baseCurrency
+
+  const visibleAmount = !isBaseCurrency
+    ? formatCurrencyWithConversion(currency, baseCurrency, amount)
+    : formatCurrency(currency, amount)
+
+  const conversionMessage =
+    !isBaseCurrency && `Converted from ${formatCurrency(currency, amount)}`
 
   return (
     <Card className="my-1" variant="ghost" asChild>
@@ -77,11 +105,32 @@ const Transaction = ({
               {date?.toLocaleString()}
             </Text>
           </Box>
-          <Box className="ml-auto self-center">
-            <Text as="div" size="1" weight="bold">
-              {formatAmount(amount)}
+          <Grid className="ml-auto self-center" columns="1fr 32px">
+            <Text
+              as="div"
+              size="1"
+              weight="bold"
+              className="col-start-1 col-span-1"
+            >
+              {visibleAmount}
             </Text>
-          </Box>
+            {!isBaseCurrency && (
+              <Tooltip content={conversionMessage}>
+                <IconButton
+                  size="2"
+                  variant="ghost"
+                  radius="full"
+                  className="ml-auto"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                  }}
+                >
+                  <InfoCircledIcon height={16} width={16} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Grid>
         </Flex>
       </Link>
     </Card>

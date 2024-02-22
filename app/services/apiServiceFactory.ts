@@ -1,3 +1,5 @@
+import { FinanceSource } from '@prisma/client'
+
 export const apiServiceFactory = (getBaseUrl: () => string) => ({
   USER: {
     authenticate: async (email: string, password: string) => {
@@ -27,12 +29,12 @@ export const apiServiceFactory = (getBaseUrl: () => string) => ({
     },
   },
   ACCOUNT: {
-    getAll: async () => {
+    getAll: async (): Promise<FinanceSource[]> => {
       const ENDPOINT = `${getBaseUrl()}/api/financeSource`
 
       const response = await fetch(ENDPOINT)
 
-      return await response.json()
+      return (await response.json()).accounts as FinanceSource[]
     },
   },
 })

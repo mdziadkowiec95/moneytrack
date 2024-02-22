@@ -1,18 +1,33 @@
+import { navigateTransactionsWithSearchParams } from '@/app/actions'
+import { apiServiceServer } from '@/app/services/apiServiceServer'
 import { dbService } from '@/app/services/dbService'
-import Transaction from '@/components/transactions/Transaction/Transaction'
+import TransactionList from '@/components/transactions/TransactionList/TransactionList'
 import { getAuthServerSession } from '@/utils/auth'
+import { getProfileBaseCurrency } from '@/utils/currency'
 import { Button, Grid } from '@radix-ui/themes'
+import { NextPage } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-const Transactions = async () => {
+export const Transactions: NextPage<{
+  searchParams: {
+    accountId?: string
+  }
+}> = async ({ searchParams }) => {
   const session = await getAuthServerSession()
+
+  console.log({ searchParams })
 
   if (!session?.user.id) {
     return redirect('/api/auth/signin')
   }
 
-  const transactions = await dbService.getTransactions()
+  const transactions = await dbService.getTransactions({
+    financeSourceId: searchParams?.accountId,
+  })
+
+  const baseCurrency = await getProfileBaseCurrency()
+  const accounts = await apiServiceServer.ACCOUNT.getAll()
 
   return (
     <>
@@ -26,9 +41,12 @@ const Transactions = async () => {
       </Grid>
 
       <Grid className="my-6" gap="2">
-        {transactions.map((transaction) => (
-          <Transaction key={transaction.id} {...transaction} />
-        ))}
+        <TransactionList
+          initialTransactions={transactions}
+          baseCurrency={baseCurrency}
+          availableAccounts={accounts}
+          onFiltersChange={navigateTransactionsWithSearchParams}
+        />
       </Grid>
     </>
   )

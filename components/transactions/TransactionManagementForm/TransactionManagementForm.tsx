@@ -4,18 +4,20 @@ import { useEffect, useRef, useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import { MinusCircledIcon, PlusCircledIcon } from '@radix-ui/react-icons'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Button, Heading, Select, TextField } from '@radix-ui/themes'
+import { Button, Heading, Select, Text, TextField } from '@radix-ui/themes'
 
 import Datepicker, { DateValueType } from 'react-tailwindcss-datepicker'
 import { addNewTransaction, updateTransaction } from '@/app/actions'
 import {
   Category,
+  Currency,
   FinanceSource,
   Transaction,
   TransactionType,
 } from '@prisma/client'
 import { useSession } from 'next-auth/react'
 import { apiServiceClient } from '@/app/services/apiServiceClient'
+import { formatAmount } from '@/utils/currency'
 
 type TimeValueType = {
   hours: number
@@ -31,6 +33,8 @@ type TransationManagementFormState = {
   title: string
   categoryId?: Category['id']
   financeSourceId?: string
+  currency: Currency
+  formattedAmount?: string
 }
 
 type InitialData = Transaction & {
@@ -72,6 +76,7 @@ const TransactionManagementForm = ({
         amount: undefined,
         title: '',
         financeSourceId: undefined,
+        currency: Currency.PLN,
       }
 
       if (initialData) {
@@ -90,6 +95,8 @@ const TransactionManagementForm = ({
           }
         }
 
+        console.log({ initialData })
+
         initialState.amount = initialData.amount
         initialState.title = initialData.title
         initialState.categoryId = initialData?.category?.id
@@ -106,6 +113,8 @@ const TransactionManagementForm = ({
   const [accounts, setAccounts] = useState<FinanceSource[]>()
   const [accountsLoading, setAccountsLoading] = useState(false)
 
+  const [amountFieldFocused, setAmmountFieldFocused] = useState(false)
+
   useEffect(() => {
     if (session.status !== 'authenticated') return
 
@@ -120,6 +129,7 @@ const TransactionManagementForm = ({
       updateFormState((state) => ({
         ...state,
         financeSourceId: accountsData.accounts[0]?.id,
+        currency: accountsData.accounts[0]?.currency,
       }))
 
       setAccountsLoading(false)
@@ -186,6 +196,7 @@ const TransactionManagementForm = ({
     updateFormState((state) => ({
       ...state,
       [event.target.name]: newValue,
+      formattedAmount: formatAmount(newValue),
     }))
   }
 
@@ -285,14 +296,27 @@ const TransactionManagementForm = ({
                   size="3"
                   className="pl-6"
                   required
+                  onFocus={() => {
+                    setAmmountFieldFocused(true)
+                  }}
+                  onBlur={() => {
+                    setAmmountFieldFocused(false)
+                  }}
                   onChange={onAmountFieldChange}
-                  value={formState.amount}
+                  value={
+                    amountFieldFocused
+                      ? formState.amount
+                      : formState.formattedAmount
+                  }
                   min={0}
                   type="text"
                   inputMode="numeric"
                   placeholder="Amount"
                 />
               </Form.Control>
+              <TextField.Slot gap="6">
+                <Text>{formState.currency}</Text>
+              </TextField.Slot>
             </TextField.Root>
           </div>
         </Form.Field>
@@ -304,9 +328,23 @@ const TransactionManagementForm = ({
 
           <Select.Root
             name="financeSourceId"
-            // defaultValue={formState.accountId}
             value={formState.financeSourceId}
-            onValueChange={(value) => onSelectChange('financeSourceId', value)}
+            size="3"
+            onValueChange={(value) => {
+              onSelectChange('financeSourceId', value)
+              const selectedAccount = accounts?.find(
+                (account) => account.id === value
+              )
+
+              console.log(accounts, selectedAccount, value)
+
+              if (selectedAccount) {
+                updateFormState((state) => ({
+                  ...state,
+                  currency: selectedAccount.currency,
+                }))
+              }
+            }}
           >
             <Select.Trigger />
             <Select.Content>
@@ -324,12 +362,6 @@ const TransactionManagementForm = ({
         <Form.Field className="grid mb-[10px]" name="title">
           <div className="flex items-baseline justify-between">
             <Form.Label>Title</Form.Label>
-            {/* <Form.Message
-            className="text-[13px] text-black opacity-[0.8]"
-            match="valueMissing"
-          >
-            Please enter a question
-          </Form.Message> */}
           </div>
           <Form.Control asChild>
             <TextField.Input

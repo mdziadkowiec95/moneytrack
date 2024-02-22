@@ -1,7 +1,9 @@
+import { dbService } from '@/app/services/dbService'
 import TransactionManagementForm from '@/components/transactions/TransactionManagementForm/TransactionManagementForm'
 import { db } from '@/utils/db'
 import { Button, Grid } from '@radix-ui/themes'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
 const EditTransaction = async ({ params }: { params: { id: string } }) => {
   // @TODO Validate user
@@ -10,14 +12,22 @@ const EditTransaction = async ({ params }: { params: { id: string } }) => {
     include: { category: true },
   })
 
+  const categories = await dbService.getCategories()
+
+  if (!transaction) {
+    return notFound()
+  }
+
   return (
     <>
       <Button asChild>
         <Link href="/app/transactions">Cancel</Link>
       </Button>
       <Grid className="py-6">
-        {/* @ts-expect-error */}
-        <TransactionManagementForm initialData={transaction} />
+        <TransactionManagementForm
+          initialData={transaction}
+          categories={categories}
+        />
       </Grid>
     </>
   )

@@ -21,6 +21,13 @@ enum FinanceSourceType {
   INVESTMENT
 }
 
+enum Currency {
+  USD
+  PLN
+  GBP
+  EUR
+}
+
 model Category {
   id           Int           @id @default(autoincrement())
   name         String        @unique
@@ -67,7 +74,7 @@ model FinanceSource {
   name                   String
   description            String?
   type                   FinanceSourceType      @default(CASH)
-  currency               String
+  currency               Currency
   balance                Float                  @default(0)
   user                   User                   @relation(fields: [userId], references: [id])
   userId                 String

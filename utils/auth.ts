@@ -15,7 +15,7 @@ import { apiServiceServer } from '@/app/services/apiServiceServer'
 
 export const authOptions: NextAuthOptions = {
   // TODO -> Workaround DB persistance for credential provider auth -> https://nneko.branche.online/next-auth-credentials-provider-with-the-database-session-strategy/
-  adapter: PrismaAdapter(db) as any,
+  adapter: PrismaAdapter(db) as unknown as NextAuthOptions['adapter'],
   providers: [
     CredentialsProvider({
       name: 'Credentials',

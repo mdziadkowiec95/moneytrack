@@ -1,10 +1,27 @@
 import { getAuthServerSession } from '@/utils/auth'
 import { db } from '@/utils/db'
-import { FinanceSource } from '@prisma/client'
+import { FinanceSource, FinanceSourceType } from '@prisma/client'
 import { Avatar, Button, Card, Flex, Grid, Text, Box } from '@radix-ui/themes'
+import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import React from 'react'
+
+import cashIcon from '@/assets/icons/cash.svg'
+import investmentIcon from '@/assets/icons/investments.svg'
+import bankIcon from '@/assets/icons/bank.svg'
+
+const ACCOUNT_ICON_MAP = {
+  CASH: cashIcon,
+  INVESTMENT: investmentIcon,
+  BANK_ACCOUNT: bankIcon,
+} as const
+
+const ACCOUNT_DISPLAY_NAME_MAP = {
+  CASH: 'Cash',
+  INVESTMENT: 'Investment',
+  BANK_ACCOUNT: 'Bank account',
+} as const
 
 const AccountsPage = async () => {
   const session = await getAuthServerSession()
@@ -19,7 +36,9 @@ const AccountsPage = async () => {
     },
   })) as FinanceSource[]
 
-  console.log({ financeSources })
+  const getAccountTypeIcon = (type: FinanceSourceType) => ACCOUNT_ICON_MAP[type]
+  const getAccountTypeDisplayName = (type: FinanceSourceType) =>
+    ACCOUNT_DISPLAY_NAME_MAP[type]
 
   return (
     <div>
@@ -37,13 +56,22 @@ const AccountsPage = async () => {
           <Card key={financeSource.id} asChild>
             <Link href={`/app/accounts/edit/${financeSource.id}`}>
               <Flex gap="3" align="center">
-                <Avatar size="3" radius="full" fallback="T" />
+                <Image
+                  src={getAccountTypeIcon(financeSource.type)}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                  alt={financeSource?.name}
+                />
                 <Box>
                   <Text as="p" size="2" weight="bold">
                     {financeSource.name}
                   </Text>
+                  <Text>{financeSource.currency}</Text>
+                </Box>
+                <Box className="ml-auto">
                   <Text as="p" size="2" color="gray">
-                    {financeSource.type}
+                    {getAccountTypeDisplayName(financeSource.type)}
                   </Text>
                 </Box>
               </Flex>

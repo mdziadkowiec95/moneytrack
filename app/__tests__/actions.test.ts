@@ -146,6 +146,7 @@ const createAccount = async () => {
 
   accountFormData.append('name', 'Cash')
   accountFormData.append('financeSourceType', FinanceSourceType.CASH)
+  accountFormData.append('currency', 'PLN')
 
   await addNewAccount(accountFormData)
 

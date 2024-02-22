@@ -2,12 +2,19 @@ import { getAuthServerSession } from '@/utils/auth'
 import { db } from '@/utils/db'
 
 export const dbService = {
-  getTransactions: async ({ take = 10 } = {}) => {
+  getTransactions: async ({
+    take = 10,
+    financeSourceId,
+  }: {
+    take?: number
+    financeSourceId?: string
+  } = {}) => {
     const session = await getAuthServerSession()
 
     return db.transaction.findMany({
       where: {
         userId: session?.user.id,
+        financeSourceId: financeSourceId,
       },
       orderBy: {
         date: 'desc',
@@ -18,6 +25,12 @@ export const dbService = {
             id: true,
             name: true,
             displayName: true,
+          },
+        },
+        financeSource: {
+          select: {
+            id: true,
+            currency: true,
           },
         },
       },

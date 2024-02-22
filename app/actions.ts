@@ -2,11 +2,12 @@
 
 import { getAuthServerSession } from '@/utils/auth'
 import { db } from '@/utils/db'
-import { FinanceSourceType, TransactionType } from '@prisma/client'
+import { Currency, FinanceSourceType, TransactionType } from '@prisma/client'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { addMilliseconds } from 'date-fns'
 import { revalidateTag } from 'next/cache'
+import { TransactionFilterFormData } from '@/components/transactions/TransactionFilters/TransactionFilters'
 
 const baseTransactionSchema = z.object({
   title: z.string(),
@@ -69,7 +70,7 @@ export async function addNewTransaction(formData: FormData) {
   const [lastTransaction] = transactions
 
   // TODO - Should assume initial balance set when creating account for the default balance
-  let balanceDelta =
+  const balanceDelta =
     transaction.type === TransactionType.INCOME
       ? transaction.amount
       : -transaction.amount
@@ -317,7 +318,7 @@ export async function updateTransaction(formData: FormData) {
 
       const balancesDescending = balancesAscending.toReversed()
 
-      let balanceDelta =
+      const balanceDelta =
         transaction.type === TransactionType.INCOME
           ? transaction.amount
           : -transaction.amount
@@ -346,6 +347,7 @@ export async function updateTransaction(formData: FormData) {
           amount: transaction.amount,
           date: transaction.date,
           type: transaction.type,
+          categoryId: transaction.categoryId,
           financeSourceId: transaction.financeSourceId,
           financeSourceHistory: {
             update: {
@@ -472,7 +474,7 @@ export async function updateTransaction(formData: FormData) {
 
       const balancesDescending = balancesAscending.toReversed()
 
-      let balanceDelta =
+      const balanceDelta =
         transaction.type === TransactionType.INCOME
           ? transaction.amount
           : -transaction.amount
@@ -633,12 +635,13 @@ export async function addNewAccount(formData: FormData) {
   const account = {
     name: formData.get('name') as string,
     financeSourceType: formData.get('financeSourceType') as FinanceSourceType,
+    currency: formData.get('currency') as Currency,
   }
 
   await db.financeSource.create({
     data: {
       name: account.name,
-      currency: 'PLN',
+      currency: account.currency,
       type: account.financeSourceType,
       balance: 0,
       userId: session?.user.id,
@@ -667,4 +670,17 @@ export async function registerUser(formData: FormData) {
   })
 
   redirect('/api/auth/signin')
+}
+
+export async function navigateTransactionsWithSearchParams(
+  formData: TransactionFilterFormData
+) {
+  const params = new URLSearchParams()
+  const accountId = formData.get('accountId')
+
+  if (accountId) {
+    params.set('accountId', accountId)
+  }
+
+  redirect(`/app/transactions?${params.toString()}`)
 }

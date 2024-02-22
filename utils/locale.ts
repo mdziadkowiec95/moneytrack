@@ -3,5 +3,5 @@ export const getBaseCurrency = () => {
 }
 
 export const getCurrentLocale = () => {
-  return 'en'
+  return 'pl-PL'
 }
