@@ -30,7 +30,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps
       - name: Run tests
-        run: npm run prisma deploy && npm run test-e2e-ci
+        run: npm run prisma migrate deploy && npm run test-e2e-ci
         env:
           CI: true
           DATABASE_URL: '${{ secrets.DATABASE_URL }}'
