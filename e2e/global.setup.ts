@@ -1,16 +1,27 @@
 import { db } from '@/utils/db'
-import { User } from '@prisma/client'
 import { test } from '@playwright/test'
 import { USERS } from '@/e2e/utils/users'
 
-async function setupDefaultAccount() {
+async function setupDefaultDataInDB() {
   try {
-    // Force type (assuming that we have this user in thest always)
-    const testUser = (await db.user.findUnique({
+    let testUser = await db.user.findUnique({
       where: {
         email: USERS.STANDARD.email,
       },
-    })) as User
+    })
+
+    if (!testUser) {
+      // create user
+      testUser = await db.user.create({
+        data: {
+          email: USERS.STANDARD.email,
+          username: USERS.STANDARD.username,
+          password: USERS.STANDARD.password,
+          firstName: USERS.STANDARD.firstName,
+          lastName: USERS.STANDARD.lastName,
+        },
+      })
+    }
 
     const existingAccount = await db.financeSource.findFirst({
       where: {
@@ -19,6 +30,7 @@ async function setupDefaultAccount() {
         type: 'CASH',
       },
     })
+
     if (!existingAccount) {
       await db.financeSource.create({
         data: {
@@ -38,7 +50,7 @@ async function setupDefaultAccount() {
 test('Setup DB', async () => {
   console.log('Setup "Default Cash Account" account...')
 
-  await setupDefaultAccount()
+  await setupDefaultDataInDB()
 
   console.log('Setup "Default Cash Account" account finished!')
 })

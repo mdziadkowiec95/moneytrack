@@ -10,15 +10,10 @@ test('sign in and sign out', async ({ page }) => {
   const Dashboard = new DashboardPage(page)
 
   await Home.goToHomePage()
-
   await Home.clickSignInButton()
-
   await Login.signIn(USERS.STANDARD)
-
   await Dashboard.verifyDashboardElementsAfterLogin()
-
   await Dashboard.openUserProfileMenu()
-
   await Dashboard.clickSignOutButton()
 })
 
