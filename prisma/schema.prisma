@@ -58,7 +58,7 @@ model Transaction {
 
 model FinanceSourceHistory {
   id              String        @id @default(uuid())
-  financeSource   FinanceSource @relation(fields: [financeSourceId], references: [id])
+  financeSource   FinanceSource @relation(fields: [financeSourceId], references: [id], onDelete: Cascade)
   financeSourceId String
   balance         Float
   createdAt       DateTime      @default(now())
