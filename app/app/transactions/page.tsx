@@ -5,9 +5,13 @@ import TransactionList from '@/components/transactions/TransactionList/Transacti
 import { getAuthServerSession } from '@/utils/auth'
 import { getProfileBaseCurrency } from '@/utils/currency'
 import { Button, Grid } from '@radix-ui/themes'
-import { NextPage } from 'next'
+import type { NextPage, Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+
+export const metadata: Metadata = {
+  title: 'Transactions',
+}
 
 const Transactions: NextPage<{
   searchParams: {

@@ -72,7 +72,9 @@ const TransactionList = ({
         />
       ))}
 
-      <Button onClick={onLoadMoreClick}>Load more</Button>
+      {transactions.length > 0 && (
+        <Button onClick={onLoadMoreClick}>Load more</Button>
+      )}
     </div>
   )
 }

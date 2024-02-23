@@ -48,7 +48,11 @@ export const dbService = {
     const session = await getAuthServerSession()
 
     return db.$transaction([
-      db.transaction.count(),
+      db.transaction.count({
+        where: {
+          userId: session?.user.id,
+        },
+      }),
       db.transaction.findMany({
         where: {
           userId: session?.user.id,

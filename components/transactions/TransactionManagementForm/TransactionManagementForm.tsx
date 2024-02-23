@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import { MinusCircledIcon, PlusCircledIcon } from '@radix-ui/react-icons'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Button, Heading, Select, Text, TextField } from '@radix-ui/themes'
+import {
+  Button,
+  Grid,
+  Heading,
+  Select,
+  Text,
+  TextField,
+} from '@radix-ui/themes'
 
 import Datepicker, { DateValueType } from 'react-tailwindcss-datepicker'
 import { addNewTransaction, updateTransaction } from '@/app/actions'
@@ -44,14 +51,16 @@ type InitialData = Transaction & {
 const isIncome = (type: TransactionType) => type === TransactionType.INCOME
 
 const toggleGroupItemClasses =
-  'hover:bg-black-200 color-mauve11 flex h-[35px] px-3 items-center justify-center data-[state=on]:bg-white data-[state=on]:text-black text-base leading-4 first:rounded-l last:rounded-r focus:z-10 '
+  'hover:bg-black-200 color-mauve11 flex-1 h-[35px] px-3 items-center justify-center data-[state=on]:bg-white data-[state=on]:text-black text-base leading-4 focus:z-10 rounded-full'
 
 const TransactionManagementForm = ({
   initialData,
   categories,
+  onDelete,
 }: {
   initialData?: InitialData
   categories: Category[]
+  onDelete?: (id: InitialData['id']) => void
 }) => {
   const session = useSession()
   const [formState, updateFormState] = useState<TransationManagementFormState>(
@@ -248,7 +257,7 @@ const TransactionManagementForm = ({
       </Heading>
       <Form.Root className="w-[260px]" action={onSubmit}>
         <ToggleGroup.Root
-          className="inline-flex rounded  shadow-gray-500 shadow-[0_1px_2px] "
+          className="flex rounded-full shadow-gray-500 shadow-[0_1px_2px] my-[10px]"
           type="single"
           defaultValue="outcome"
           onValueChange={(selectedType: TransactionType) => {
@@ -261,19 +270,18 @@ const TransactionManagementForm = ({
             }
           }}
           value={formState.type}
-          aria-label="Text alignment"
         >
           <ToggleGroup.Item
             className={toggleGroupItemClasses}
             value={TransactionType.OUTCOME}
-            aria-label="Center aligned"
+            aria-label="Select outcome transaction type"
           >
             Outcome
           </ToggleGroup.Item>
           <ToggleGroup.Item
             className={toggleGroupItemClasses}
             value={TransactionType.INCOME}
-            aria-label="Left aligned"
+            aria-label="Select income transaction type"
           >
             Income
           </ToggleGroup.Item>
@@ -347,7 +355,7 @@ const TransactionManagementForm = ({
               }
             }}
           >
-            <Select.Trigger />
+            <Select.Trigger aria-label="Choose Account" />
             <Select.Content>
               {accounts &&
                 formState.financeSourceId &&
@@ -374,6 +382,7 @@ const TransactionManagementForm = ({
             />
           </Form.Control>
         </Form.Field>
+
         <Form.Field className="grid mb-[10px]" name="title">
           <Form.Label>Date</Form.Label>
           <Datepicker
@@ -385,6 +394,21 @@ const TransactionManagementForm = ({
           />
         </Form.Field>
 
+        <Form.Field name="time" className="mb-[10px]">
+          <div className="flex items-baseline justify-between">
+            <Form.Label>Time</Form.Label>
+          </div>
+          <Form.Control asChild>
+            <TextField.Input
+              onChange={onTimeChange}
+              value={getValueForTimeInput(formState.time)}
+              type="time"
+              step={2}
+              size="3"
+            />
+          </Form.Control>
+        </Form.Field>
+
         <Form.Field name="categoryId">
           <div className="flex items-baseline justify-between">
             <Form.Label>Category</Form.Label>
@@ -393,6 +417,7 @@ const TransactionManagementForm = ({
           <Select.Root
             name="categoryId"
             required
+            size="3"
             value={
               formState.categoryId ? String(formState.categoryId) : undefined
             }
@@ -400,7 +425,10 @@ const TransactionManagementForm = ({
               onSelectChange('categoryId', selectedCategory)
             }
           >
-            <Select.Trigger placeholder="Choose Category" />
+            <Select.Trigger
+              placeholder="Choose Category"
+              aria-label="Choose Category"
+            />
             <Select.Content>
               {categories &&
                 categories.map((category) => (
@@ -412,23 +440,16 @@ const TransactionManagementForm = ({
           </Select.Root>
         </Form.Field>
 
-        <Form.Field name="time">
-          <Form.Control asChild>
-            <TextField.Input
-              onChange={onTimeChange}
-              value={getValueForTimeInput(formState.time)}
-              type="time"
-              step={2}
-              size="3"
-              // min="09:00"
-              // max="18:00"
-            />
-          </Form.Control>
-        </Form.Field>
-
-        <Form.Submit asChild>
-          <Button>Save</Button>
-        </Form.Submit>
+        <Grid columns="1fr 1fr" gap="2" className="mt-4">
+          <Form.Submit asChild>
+            <Button>Save</Button>
+          </Form.Submit>
+          {initialData && (
+            <Button color="crimson" onClick={() => onDelete?.(initialData?.id)}>
+              Delete
+            </Button>
+          )}
+        </Grid>
       </Form.Root>
     </div>
   )

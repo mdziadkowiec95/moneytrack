@@ -13,7 +13,7 @@ const TransactionsWidget = async () => {
 
   const baseCurrency = await getProfileBaseCurrency()
 
-  const showMoreButtonVisible = count > lastTransactions.length
+  const showMoreButtonVisible = count > 5
 
   return (
     <Card size="2">
