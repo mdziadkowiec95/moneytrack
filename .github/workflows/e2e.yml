@@ -1,9 +1,10 @@
-name: Deployment tests
+name: Deployment chain
 on:
   push:
     branches: [main, master]
 jobs:
   test_setup:
+    name: Ensure deployment is ready
     runs-on: ubuntu-latest
 
     outputs:
@@ -18,7 +19,7 @@ jobs:
           max_timeout: 600
   test_e2e:
     needs: test_setup
-    name: Playwright tests
+    name: Run E2E tests
     timeout-minutes: 5
     environment: Production
     runs-on: ubuntu-latest
