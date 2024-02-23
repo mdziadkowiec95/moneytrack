@@ -21,3 +21,6 @@ jobs:
       - run: npm ci
       - name: 'Test integration'
         run: npm run test-ci
+        env:
+          DATABASE_URL: 'postgresql://prisma:prisma@localhost:5433/tests'
+          DIRECT_URL: 'postgresql://prisma:prisma@localhost:5433/tests'
