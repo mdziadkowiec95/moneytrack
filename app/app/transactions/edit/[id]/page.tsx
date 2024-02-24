@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Edit transaction',
+  title: 'Edit Transaction',
 }
 
 const EditTransaction = async ({ params }: { params: { id: string } }) => {

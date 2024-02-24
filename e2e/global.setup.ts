@@ -1,6 +1,7 @@
 import { db } from '@/utils/db'
 import { test } from '@playwright/test'
 import { USERS } from '@/e2e/utils/users'
+import { DEFAULT_ACCOUNT } from './utils/defaults'
 
 async function setupDefaultDataInDB() {
   try {
@@ -26,7 +27,7 @@ async function setupDefaultDataInDB() {
     const existingAccount = await db.financeSource.findFirst({
       where: {
         userId: testUser.id,
-        name: 'Default Cash Account',
+        name: DEFAULT_ACCOUNT,
         type: 'CASH',
       },
     })
@@ -35,7 +36,7 @@ async function setupDefaultDataInDB() {
       await db.financeSource.create({
         data: {
           userId: testUser.id,
-          name: 'Default Cash Account',
+          name: DEFAULT_ACCOUNT,
           currency: 'PLN',
           type: 'CASH',
           balance: 0,

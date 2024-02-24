@@ -82,7 +82,7 @@ const AccountManagementForm = ({
       <Form.Root className="w-[260px]" action={onSubmit}>
         <Form.Field name="financeSourceId">
           <div className="flex items-baseline justify-between">
-            <Form.Label>Account</Form.Label>
+            <Form.Label>Choose Account</Form.Label>
           </div>
 
           <Select.Root
@@ -91,7 +91,7 @@ const AccountManagementForm = ({
             value={formState.financeSourceType}
             onValueChange={onAccountChange}
           >
-            <Select.Trigger />
+            <Select.Trigger aria-label="Choose Account" />
             <Select.Content>
               {ACCOUNTS.map((accountType) => (
                 <Select.Item key={accountType.value} value={accountType.value}>
