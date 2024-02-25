@@ -49,9 +49,7 @@ export const formatAmount = (amount: number) => {
 export const getCurrencySymbol = (currency: string) => {
   const exampleNumberWithCurrency = formatCurrency(currency, 0)
 
-  const [currencySymbol] = exampleNumberWithCurrency.split(/(\d+)/)
-
-  return currencySymbol.trim()
+  return exampleNumberWithCurrency.replace(/[\s.,0-9]/g, '')
 }
 
 export const getCurrencyDisplayName = (currency: string) => {
