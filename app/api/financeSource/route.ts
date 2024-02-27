@@ -1,15 +1,24 @@
 import { db } from '@/utils/db'
-import { NextResponse } from 'next/server'
-import { getAuthServerSession } from '@/utils/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthUser } from '../utils/auth'
 
-export async function GET() {
-  const session = await getAuthServerSession()
+export async function GET(request: NextRequest) {
+  const user = await getAuthUser(request)
 
-  console.log(session)
+  if (!user) {
+    return NextResponse.json(
+      {
+        error: 'User not found',
+      },
+      {
+        status: 404,
+      }
+    )
+  }
 
   const accounts = await db.financeSource.findMany({
     where: {
-      userId: session?.user?.id,
+      userId: user?.id,
     },
   })
 

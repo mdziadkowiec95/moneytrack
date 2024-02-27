@@ -2,9 +2,10 @@ import { dbService } from '@/app/services/dbService'
 import Transaction from '@/components/transactions/TransactionItem/TransactionItem'
 import { getProfileBaseCurrency } from '@/utils/currency'
 import { ArrowRightIcon } from '@radix-ui/react-icons'
-import { Button, Card, Heading } from '@radix-ui/themes'
+import { Button, Card } from '@radix-ui/themes'
 import Link from 'next/link'
 import React from 'react'
+import TransactionWidgetHeader from './TransactionWidgetHeader'
 
 const TransactionsWidget = async () => {
   const [count, lastTransactions] = await dbService.getTransactionsWithCount({
@@ -17,9 +18,7 @@ const TransactionsWidget = async () => {
 
   return (
     <Card size="2">
-      <Heading size="4" className="mb-4">
-        Transactions history
-      </Heading>
+      <TransactionWidgetHeader />
 
       {lastTransactions.map((transaction) => (
         <Transaction
@@ -27,6 +26,7 @@ const TransactionsWidget = async () => {
           {...transaction}
           baseCurrency={baseCurrency}
           cardSize="small"
+          currentUrl="/app/"
         />
       ))}
 

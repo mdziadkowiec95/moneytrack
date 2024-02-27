@@ -115,7 +115,13 @@ const BalanceChart = () => {
     fetchBalanceData()
   }, [chartLabels])
 
-  return <Card>{chartData && <Line data={chartData} options={options} />}</Card>
+  return (
+    <Card className="h-full">
+      {chartData && (
+        <Line data={chartData} options={options} className="h-full" />
+      )}
+    </Card>
+  )
 }
 
 export default BalanceChart

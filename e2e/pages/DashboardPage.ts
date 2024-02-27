@@ -14,7 +14,9 @@ export default class DashboardPage {
     this.signInButton = page.getByRole('button', { name: 'Sign in' })
     this.signOutButton = page.getByRole('link', { name: 'Sign out' })
     this.userAvatarButton = page.getByRole('button', { name: 'User avatar' })
-    this.addNewTransactionButton = page.getByRole('link', { name: 'Add new' })
+    this.addNewTransactionButton = page.getByRole('button', {
+      name: 'Add new transaction',
+    })
   }
 
   async goToDashboardPage() {

@@ -40,6 +40,7 @@ type TransactionProps = Pick<
   financeSource: Pick<FinanceSource, 'id' | 'currency'>
   baseCurrency: Currency
   cardSize?: 'small' | 'large'
+  currentUrl: string
 }
 
 const categoryIconMap = {
@@ -68,6 +69,7 @@ const Transaction = ({
   financeSource: { currency },
   baseCurrency,
   cardSize = 'large',
+  currentUrl,
 }: TransactionProps) => {
   const categoryIcon = getCategoryIcon(category.name) || homeIcon
 
@@ -87,7 +89,7 @@ const Transaction = ({
       asChild
       size={cardSize === 'large' ? '4' : '1'}
     >
-      <Link href={`/app/transactions/edit/${id}`}>
+      <Link href={`/app/transactions/edit/${id}?redirectFrom=${currentUrl}`}>
         <Flex gap="2" align="center">
           {categoryIcon && (
             <Image

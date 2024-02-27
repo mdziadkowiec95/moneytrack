@@ -690,3 +690,7 @@ export async function navigateTransactionsWithSearchParams(
 
   redirect(`/app/transactions?${params.toString()}`)
 }
+
+export async function redirectTo() {
+  redirect('/app/transactions/addNew')
+}

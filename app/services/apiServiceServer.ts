@@ -1,3 +1,4 @@
+import { getAuthServerSession } from '@/utils/auth'
 import { apiServiceFactory } from './apiServiceFactory'
 import { headers as nextHeaders } from 'next/headers'
 
@@ -14,4 +15,9 @@ const getBaseUrlOnServerSide = (): string => {
   return `${protocol}://${host}`
 }
 
-export const apiServiceServer = apiServiceFactory(getBaseUrlOnServerSide)
+const getSessionOnServerSide = () => getAuthServerSession()
+
+export const apiServiceServer = apiServiceFactory(
+  getBaseUrlOnServerSide,
+  getSessionOnServerSide
+)

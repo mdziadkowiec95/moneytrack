@@ -1,7 +1,7 @@
 import { getAuthServerSession } from '@/utils/auth'
 import { db } from '@/utils/db'
 import { FinanceSource, FinanceSourceType } from '@prisma/client'
-import { Avatar, Button, Card, Flex, Grid, Text, Box } from '@radix-ui/themes'
+import { Avatar, Card, Flex, Grid, Text, Box } from '@radix-ui/themes'
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -10,6 +10,7 @@ import React from 'react'
 import cashIcon from '@/assets/icons/cash.svg'
 import investmentIcon from '@/assets/icons/investments.svg'
 import bankIcon from '@/assets/icons/bank.svg'
+import PageHeader from '@/components/PageHeader/PageHeader'
 
 const ACCOUNT_ICON_MAP = {
   CASH: cashIcon,
@@ -42,14 +43,7 @@ const AccountsPage = async () => {
 
   return (
     <div>
-      <Grid columns="2">
-        <Button asChild>
-          <Link href="/app/transactions/addNew">Add account</Link>
-        </Button>
-        <Button asChild>
-          <Link href="/app/">Dashboard</Link>
-        </Button>
-      </Grid>
+      <PageHeader>Add new account</PageHeader>
 
       <Grid className="my-6" gap="2" columns="3">
         {financeSources.map((financeSource) => (

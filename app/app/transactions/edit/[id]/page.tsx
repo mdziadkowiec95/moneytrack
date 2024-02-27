@@ -1,17 +1,26 @@
 import { deleteTransaction } from '@/app/actions'
 import { dbService } from '@/app/services/dbService'
+import ButtonIcon from '@/components/ButtonIcon/ButtonIcon'
+import PageHeader from '@/components/PageHeader/PageHeader'
 import TransactionManagementForm from '@/components/transactions/TransactionManagementForm/TransactionManagementForm'
 import { db } from '@/utils/db'
-import { Button, Grid } from '@radix-ui/themes'
+import { Grid } from '@radix-ui/themes'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'Edit Transaction',
 }
 
-const EditTransaction = async ({ params }: { params: { id: string } }) => {
+type EditTransactionPageProps = {
+  params: { id: string }
+  searchParams: { redirectFrom?: string }
+}
+
+const EditTransactionPage = async ({
+  params,
+  searchParams,
+}: EditTransactionPageProps) => {
   // @TODO Validate user
   const transaction = await db.transaction.findUnique({
     where: { id: params.id },
@@ -24,11 +33,14 @@ const EditTransaction = async ({ params }: { params: { id: string } }) => {
     return notFound()
   }
 
+  const cancelLinkUrl = searchParams.redirectFrom ?? '/app'
+
   return (
     <>
-      <Button asChild>
-        <Link href="/app/transactions">Cancel</Link>
-      </Button>
+      <PageHeader>Edit transaction</PageHeader>
+
+      <ButtonIcon type="back" label="Go back" href={cancelLinkUrl} />
+
       <Grid className="py-6">
         <TransactionManagementForm
           initialData={transaction}
@@ -40,4 +52,4 @@ const EditTransaction = async ({ params }: { params: { id: string } }) => {
   )
 }
 
-export default EditTransaction
+export default EditTransactionPage

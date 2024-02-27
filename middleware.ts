@@ -15,6 +15,16 @@ export default withAuth(
     ) {
       return NextResponse.redirect(new URL('/app', req.url))
     }
+
+    // const requestHeaders = new Headers(req.headers)
+    // requestHeaders.set('x-url', req.url)
+
+    // return NextResponse.next({
+    //   request: {
+    //     // Apply new request headers
+    //     headers: requestHeaders,
+    //   },
+    // })
   },
   {
     callbacks: {

@@ -1,6 +1,6 @@
 import { db } from '@/utils/db'
 import { NextResponse } from 'next/server'
-import jwt from 'jsonwebtoken'
+import { signToken } from '@/app/api/utils/auth'
 
 export async function POST(request: Request) {
   const { email, password } = await request.json()
@@ -23,14 +23,9 @@ export async function POST(request: Request) {
     )
   }
 
-  const token = jwt.sign(
-    {
-      user: {
-        id: user.id,
-      },
-    },
-    'secret-jwt-here'
-  )
+  const token = signToken({
+    user: { id: user.id },
+  })
 
   console.log(' POST login')
 

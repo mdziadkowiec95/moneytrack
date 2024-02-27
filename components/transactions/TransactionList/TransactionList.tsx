@@ -15,6 +15,7 @@ import { Button } from '@radix-ui/themes'
 import { apiServiceClient } from '@/app/services/apiServiceClient'
 
 type TransactionListProps = {
+  initialTransactionsCount: number
   initialTransactions: (Transaction & {
     category: Pick<Category, 'id' | 'name' | 'displayName'>
     financeSource: Pick<FinanceSource, 'id' | 'currency'>
@@ -25,6 +26,7 @@ type TransactionListProps = {
 }
 
 const TransactionList = ({
+  initialTransactionsCount,
   initialTransactions = [],
   baseCurrency,
   availableAccounts,
@@ -34,11 +36,17 @@ const TransactionList = ({
     TransactionListProps['initialTransactions']
   >([])
 
+  const [transactionsCount, setTransactionsCount] = useState(0)
+
   const [startFrom, setStartFrom] = useState(0)
 
   useEffect(() => {
     setTransactions(initialTransactions ?? [])
   }, [initialTransactions])
+
+  useEffect(() => {
+    setTransactionsCount(initialTransactionsCount)
+  }, [initialTransactionsCount])
 
   useEffect(() => {
     if (startFrom === 0) return
@@ -69,10 +77,11 @@ const TransactionList = ({
           key={transaction.id}
           {...transaction}
           baseCurrency={baseCurrency}
+          currentUrl={window.location.pathname}
         />
       ))}
 
-      {transactions.length > 0 && (
+      {transactions.length > 0 && transactionsCount > transactions.length && (
         <Button onClick={onLoadMoreClick}>Load more</Button>
       )}
     </div>

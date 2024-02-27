@@ -1,3 +1,4 @@
+import { getSession } from 'next-auth/react'
 import { apiServiceFactory } from './apiServiceFactory'
 
 const getBaseUrlOnClientSide = (): string => {
@@ -8,4 +9,9 @@ const getBaseUrlOnClientSide = (): string => {
   throw new Error('Trying to access window object on the server')
 }
 
-export const apiServiceClient = apiServiceFactory(getBaseUrlOnClientSide)
+const getSessionOnClientSide = () => getSession()
+
+export const apiServiceClient = apiServiceFactory(
+  getBaseUrlOnClientSide,
+  getSessionOnClientSide
+)

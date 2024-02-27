@@ -1,6 +1,7 @@
 'use client'
 
 import AccountChooser from '@/components/AccountChooser/AccountChooser'
+import ButtonIcon from '@/components/ButtonIcon/ButtonIcon'
 import { TypedFormData, createFormData } from '@/utils/formData'
 import { FinanceSource } from '@prisma/client'
 import { GearIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons'
@@ -62,6 +63,14 @@ const TransactionFilters = ({
 
   return (
     <Flex align="center" justify="end">
+      <div className="mr-auto">
+        <ButtonIcon
+          type="add"
+          label="Add new transaction"
+          href="/app/transactions/addNew/?redirectFrom=/app/transactions"
+        />
+      </div>
+
       <TextField.Root size="3" className="mr-3">
         <TextField.Slot>
           <MagnifyingGlassIcon height="16" width="16" />

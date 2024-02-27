@@ -4,14 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as Form from '@radix-ui/react-form'
 import { MinusCircledIcon, PlusCircledIcon } from '@radix-ui/react-icons'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import {
-  Button,
-  Grid,
-  Heading,
-  Select,
-  Text,
-  TextField,
-} from '@radix-ui/themes'
+import { Button, Grid, Select, Text, TextField } from '@radix-ui/themes'
 
 import Datepicker, { DateValueType } from 'react-tailwindcss-datepicker'
 import { addNewTransaction, updateTransaction } from '@/app/actions'
@@ -104,14 +97,10 @@ const TransactionManagementForm = ({
           }
         }
 
-        console.log({ initialData })
-
         initialState.amount = initialData.amount
+        initialState.formattedAmount = formatAmount(initialData.amount)
         initialState.title = initialData.title
         initialState.categoryId = initialData?.category?.id
-
-        console.log('initialData.accountId', initialData.financeSourceId)
-
         initialState.financeSourceId = initialData.financeSourceId
       }
 
@@ -250,14 +239,19 @@ const TransactionManagementForm = ({
     }
   }
 
+  const onDeleteTransaction = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+
+    if (initialData) {
+      onDelete?.(initialData?.id)
+    }
+  }
+
   return (
-    <div>
-      <Heading size="4">
-        Add new {isIncome(formState.type) ? 'Income' : 'Outcome'}
-      </Heading>
-      <Form.Root className="w-[260px]" action={onSubmit}>
+    <>
+      <Form.Root className="w-3/5" action={onSubmit}>
         <ToggleGroup.Root
-          className="flex rounded-full shadow-gray-500 shadow-[0_1px_2px] my-[10px]"
+          className="flex rounded-full shadow-gray-500 shadow-[0_1px_2px] my-4"
           type="single"
           defaultValue="outcome"
           onValueChange={(selectedType: TransactionType) => {
@@ -287,12 +281,12 @@ const TransactionManagementForm = ({
           </ToggleGroup.Item>
         </ToggleGroup.Root>
 
-        <Form.Field className="grid mb-[10px]" name="amount">
+        <Form.Field className="grid mb-4" name="amount">
           <div className="flex items-baseline justify-between">
-            <Form.Label>Amount</Form.Label>
+            <Form.Label className="mb-2">Amount</Form.Label>
           </div>
           <div className="relative">
-            <TextField.Root>
+            <TextField.Root className="px-3">
               <TextField.Slot gap="6">
                 {!isIncome(formState.type) ? (
                   <MinusCircledIcon className="text-red-500" />
@@ -330,9 +324,9 @@ const TransactionManagementForm = ({
           </div>
         </Form.Field>
 
-        <Form.Field name="financeSourceId">
+        <Form.Field name="financeSourceId" className="mb-4">
           <div className="flex items-baseline justify-between">
-            <Form.Label>Account</Form.Label>
+            <Form.Label className="mb-2">Account</Form.Label>
           </div>
 
           <Select.Root
@@ -341,11 +335,10 @@ const TransactionManagementForm = ({
             size="3"
             onValueChange={(value) => {
               onSelectChange('financeSourceId', value)
+
               const selectedAccount = accounts?.find(
                 (account) => account.id === value
               )
-
-              console.log(accounts, selectedAccount, value)
 
               if (selectedAccount) {
                 updateFormState((state) => ({
@@ -355,7 +348,7 @@ const TransactionManagementForm = ({
               }
             }}
           >
-            <Select.Trigger aria-label="Choose Account" />
+            <Select.Trigger aria-label="Choose Account" className="w-full" />
             <Select.Content>
               {accounts &&
                 formState.financeSourceId &&
@@ -368,9 +361,9 @@ const TransactionManagementForm = ({
           </Select.Root>
         </Form.Field>
 
-        <Form.Field className="grid mb-[10px]" name="title">
+        <Form.Field className="grid  mb-4" name="title">
           <div className="flex items-baseline justify-between">
-            <Form.Label>Title</Form.Label>
+            <Form.Label className="mb-2">Title</Form.Label>
           </div>
           <Form.Control asChild>
             <TextField.Input
@@ -383,8 +376,8 @@ const TransactionManagementForm = ({
           </Form.Control>
         </Form.Field>
 
-        <Form.Field className="grid mb-[10px]" name="title">
-          <Form.Label>Date</Form.Label>
+        <Form.Field className="grid  mb-4" name="title">
+          <Form.Label className="mb-2">Date</Form.Label>
           <Datepicker
             inputName="date"
             useRange={false}
@@ -394,9 +387,9 @@ const TransactionManagementForm = ({
           />
         </Form.Field>
 
-        <Form.Field name="time" className="mb-[10px]">
+        <Form.Field name="time" className=" mb-4">
           <div className="flex items-baseline justify-between">
-            <Form.Label>Time</Form.Label>
+            <Form.Label className="mb-2">Time</Form.Label>
           </div>
           <Form.Control asChild>
             <TextField.Input
@@ -409,9 +402,9 @@ const TransactionManagementForm = ({
           </Form.Control>
         </Form.Field>
 
-        <Form.Field name="categoryId">
+        <Form.Field name="categoryId" className="mb-4">
           <div className="flex items-baseline justify-between">
-            <Form.Label>Category</Form.Label>
+            <Form.Label className="mb-2">Category</Form.Label>
           </div>
 
           <Select.Root
@@ -428,6 +421,7 @@ const TransactionManagementForm = ({
             <Select.Trigger
               placeholder="Choose Category"
               aria-label="Choose Category"
+              className="w-full"
             />
             <Select.Content>
               {categories &&
@@ -440,18 +434,18 @@ const TransactionManagementForm = ({
           </Select.Root>
         </Form.Field>
 
-        <Grid columns="1fr 1fr" gap="2" className="mt-4">
+        <Grid columns="1fr 1fr" gap="2" className="mt-8">
           <Form.Submit asChild>
             <Button>Save</Button>
           </Form.Submit>
           {initialData && (
-            <Button color="crimson" onClick={() => onDelete?.(initialData?.id)}>
+            <Button color="crimson" onClick={onDeleteTransaction}>
               Delete
             </Button>
           )}
         </Grid>
       </Form.Root>
-    </div>
+    </>
   )
 }
 

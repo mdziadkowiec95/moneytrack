@@ -1,7 +1,8 @@
 import { BalanceCard } from '@/components/BalanceCard/BalanceCard'
 import BalanceChart from '@/components/BalanceChart/BalanceChart'
+import PageHeader from '@/components/PageHeader/PageHeader'
 import TransactionsWidget from '@/components/dashboard/TransactionsWidget/TransactionsWidget'
-import { Box, Button, Card, Flex, Grid, Heading, Text } from '@radix-ui/themes'
+import { Box, Card, Flex, Grid, Text } from '@radix-ui/themes'
 import Link from 'next/link'
 
 type DashboardCardProps = {
@@ -29,10 +30,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 const Dashboard = () => {
   return (
     <div>
-      <Heading className="uppercase">Overview</Heading>
-      <Button asChild>
-        <Link href="/app/transactions/addNew">Add New</Link>
-      </Button>
+      <PageHeader>Overview</PageHeader>
 
       <Grid columns="1fr 1fr 1fr" gap="2" className="mt-5">
         <div className="col-start-1">
@@ -44,7 +42,8 @@ const Dashboard = () => {
         </DashboardCard>
 
         <TransactionsWidget />
-        <div className="col-span-2">
+
+        <div className="col-span-2 h-full">
           <BalanceChart />
         </div>
 
