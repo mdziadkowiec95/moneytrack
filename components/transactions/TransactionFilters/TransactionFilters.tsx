@@ -3,6 +3,12 @@
 import AccountChooser from '@/components/AccountChooser/AccountChooser'
 import ButtonIcon from '@/components/ButtonIcon/ButtonIcon'
 import { TypedFormData, createFormData } from '@/utils/formData'
+import {
+  LocalStorageKeys,
+  actOnStorageValueChange,
+  getLocalStorageItem,
+  updateLocalStorageItem,
+} from '@/utils/storage'
 import { FinanceSource } from '@prisma/client'
 import { GearIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons'
 import {
@@ -15,7 +21,7 @@ import {
   TextField,
 } from '@radix-ui/themes'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 type TransactionFilters = {
   accountId?: string
@@ -33,19 +39,46 @@ const TransactionFilters = ({
   availableAccounts,
   onFiltersChange,
 }: TransactionFiltersProps) => {
-  const [selectedAccount, setSelectedAccount] = useState<FinanceSource['id']>()
+  const [selectedAccount, setSelectedAccount] = useState<FinanceSource['id']>(
+    getLocalStorageItem(
+      LocalStorageKeys.TRANSACTION_FILTERS_SELECTED_ACCOUNT_ID
+    ) ?? 'ALL_ACCOUNTS'
+  )
 
   const onAccountSelected = (accountId?: FinanceSource['id']) => {
-    setSelectedAccount(accountId)
+    const selectedId = accountId ?? 'ALL_ACCOUNTS'
+
+    setSelectedAccount(selectedId)
+
+    updateAccountInLocalStorage(selectedId)
 
     const formData = createFormData<TransactionFilters>()
 
-    if (accountId) {
-      formData.append('accountId', accountId)
+    if (selectedId) {
+      formData.append('accountId', selectedId)
     }
 
     onFiltersChange(formData)
   }
+
+  useEffect(() => {
+    const syncSelectedAccountFromLocalStorage = (event: StorageEvent) =>
+      actOnStorageValueChange(
+        event,
+        LocalStorageKeys.TRANSACTION_FILTERS_SELECTED_ACCOUNT_ID,
+        (accountId) => {
+          if (accountId && accountId !== selectedAccount) {
+            setSelectedAccount(accountId ?? 'ALL_ACCOUNTS')
+          }
+        }
+      )
+
+    window.addEventListener('storage', syncSelectedAccountFromLocalStorage)
+
+    return () => {
+      window.removeEventListener('storage', syncSelectedAccountFromLocalStorage)
+    }
+  }, [selectedAccount])
 
   const onSerach = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -53,12 +86,19 @@ const TransactionFilters = ({
 
       formData.append('searchQuery', event.currentTarget.value)
 
-      setSelectedAccount(undefined)
+      setSelectedAccount('ALL_ACCOUNTS')
 
       onFiltersChange(formData)
 
       event.currentTarget.blur()
     }
+  }
+
+  const updateAccountInLocalStorage = (accountId?: string) => {
+    updateLocalStorageItem(
+      LocalStorageKeys.TRANSACTION_FILTERS_SELECTED_ACCOUNT_ID,
+      `${accountId}`
+    )
   }
 
   return (

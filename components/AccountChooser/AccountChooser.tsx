@@ -36,15 +36,27 @@ const AccountChooser = ({
     return 'Choose account'
   }
 
+  const onCancel = () => {
+    setSelectedAccount(selectedAccountId)
+  }
+
+  const onDialogVisibilityChange = (open: boolean) => {
+    if (!open) {
+      onCancel()
+    }
+  }
+
   return (
-    <Dialog.Root>
+    <Dialog.Root onOpenChange={onDialogVisibilityChange}>
       <Dialog.Trigger>
         <Button size="3">{getTriggerText(selectedAccount)}</Button>
       </Dialog.Trigger>
 
       <Dialog.Content style={{ maxWidth: 450 }}>
         <Select.Root
-          value={selectedAccount}
+          value={
+            selectedAccount === ALL_ACCOUNTS_VALUE ? undefined : selectedAccount
+          }
           onValueChange={(newAccount) => {
             setSelectedAccount(newAccount)
           }}
@@ -65,7 +77,7 @@ const AccountChooser = ({
 
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <Button variant="soft" color="gray" onClick={onCancel}>
               Cancel
             </Button>
           </Dialog.Close>
