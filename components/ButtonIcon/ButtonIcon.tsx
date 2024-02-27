@@ -27,8 +27,12 @@ const ButtonIcon = ({ type, label, href = '#', onClick }: ButtonIconProps) => {
   }
 
   return (
-    <IconButton className="rounded-full" aria-label={label} asChild>
-      <Link href={href} onClick={onClick ? onLinkClick : undefined}>
+    <IconButton className="rounded-full" asChild>
+      <Link
+        href={href}
+        onClick={onClick ? onLinkClick : undefined}
+        aria-label={label}
+      >
         {Icon && <Icon width="18" height="18" />}
       </Link>
     </IconButton>
