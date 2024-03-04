@@ -1,8 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Form from '@radix-ui/react-form'
-import { MinusCircledIcon, PlusCircledIcon } from '@radix-ui/react-icons'
+import {
+  MinusCircledIcon,
+  PlusCircledIcon,
+  SymbolIcon,
+} from '@radix-ui/react-icons'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Button, Grid, Select, Text, TextField } from '@radix-ui/themes'
 
@@ -18,6 +22,8 @@ import {
 import { useSession } from 'next-auth/react'
 import { apiServiceClient } from '@/app/services/apiServiceClient'
 import { formatAmount } from '@/utils/currency'
+import dynamic from 'next/dynamic'
+import { OpenApiLocation } from '@/components/transactions/LocationChooserModal/LocationChooserModal'
 
 type TimeValueType = {
   hours: number
@@ -35,6 +41,11 @@ type TransationManagementFormState = {
   financeSourceId?: string
   currency: Currency
   formattedAmount?: string
+  location?: string
+  locationCoords?: {
+    lat?: number
+    lon?: number
+  }
 }
 
 type InitialData = Transaction & {
@@ -79,6 +90,8 @@ const TransactionManagementForm = ({
         title: '',
         financeSourceId: undefined,
         currency: Currency.PLN,
+        location: '',
+        locationCoords: undefined,
       }
 
       if (initialData) {
@@ -112,6 +125,23 @@ const TransactionManagementForm = ({
   const [accountsLoading, setAccountsLoading] = useState(false)
 
   const [amountFieldFocused, setAmmountFieldFocused] = useState(false)
+
+  const LocationChooserModal = useMemo(
+    () =>
+      dynamic(
+        () =>
+          import(
+            '@/components/transactions/LocationChooserModal/LocationChooserModal'
+          ),
+        {
+          loading: () => (
+            <SymbolIcon className="mr-3 ease-in-out duration-200 text-blue-500 hover:text-white" />
+          ),
+          ssr: false,
+        }
+      ),
+    []
+  )
 
   useEffect(() => {
     if (session.status !== 'authenticated') return
@@ -195,6 +225,28 @@ const TransactionManagementForm = ({
       ...state,
       [event.target.name]: newValue,
       formattedAmount: formatAmount(newValue),
+    }))
+  }
+
+  const onLocationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateFormState((state) => ({
+      ...state,
+      [event.target.name]: event.target.value,
+    }))
+  }
+
+  const onLocationMapTriggerClick = () => {
+    console.log('location map trigger clicked')
+  }
+
+  const onLocationMapSelection = (location: OpenApiLocation) => {
+    updateFormState((state) => ({
+      ...state,
+      location: location.display_name,
+      locationCoords: {
+        lat: location.lat,
+        lon: location.lon,
+      },
     }))
   }
 
@@ -381,6 +433,7 @@ const TransactionManagementForm = ({
           <Datepicker
             inputName="date"
             useRange={false}
+            inputClassName="w-full px-3 py-2 rounded-full bg-black-500 text-white border border-gray-300 focus:outline-none focus:border-gray-500"
             asSingle={true}
             value={formState.date}
             onChange={onDateChange}
@@ -432,6 +485,34 @@ const TransactionManagementForm = ({
                 ))}
             </Select.Content>
           </Select.Root>
+        </Form.Field>
+
+        <Form.Field className="grid mb-4" name="location">
+          <div className="flex items-baseline justify-between">
+            <Form.Label className="mb-2">Location</Form.Label>
+          </div>
+          <div className="relative">
+            <TextField.Root>
+              <Form.Control asChild>
+                <TextField.Input
+                  size="3"
+                  required
+                  onChange={onLocationChange}
+                  value={formState.location}
+                  min={0}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Location"
+                />
+              </Form.Control>
+              <TextField.Slot gap="6">
+                <LocationChooserModal
+                  onLocationChange={onLocationMapSelection}
+                  onTriggerClick={onLocationMapTriggerClick}
+                />
+              </TextField.Slot>
+            </TextField.Root>
+          </div>
         </Form.Field>
 
         <Grid columns="1fr 1fr" gap="2" className="mt-8">
