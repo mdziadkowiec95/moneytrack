@@ -496,12 +496,9 @@ const TransactionManagementForm = ({
               <Form.Control asChild>
                 <TextField.Input
                   size="3"
-                  required
                   onChange={onLocationChange}
                   value={formState.location}
-                  min={0}
                   type="text"
-                  inputMode="numeric"
                   placeholder="Location"
                 />
               </Form.Control>
