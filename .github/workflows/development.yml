@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: 'Set up environment'
-        run: docker compose -f docker-compose.yml up -d --wait
+        run: docker compose -f compose.yml up -d --wait
       - uses: actions/checkout@v4
       - name: Use Node.js 20.x
         uses: actions/setup-node@v3

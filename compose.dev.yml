@@ -1,0 +1,12 @@
+# The containers that compose the project
+services:
+  moneytrack-local-dev-db:
+    image: postgres:13
+    restart: always
+    container_name: moneytrack-local-dev-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: local-dev-db
